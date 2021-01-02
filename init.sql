@@ -1,0 +1,4 @@
+IF DB_ID('Project') IS NOT NULL
+	DROP DATABASE Project
+
+CREATE DATABASE Project

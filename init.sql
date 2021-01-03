@@ -32,7 +32,7 @@ CREATE TABLE Locations(
 )
 
 CREATE TABLE LocationsConnetions(
-	Source_Location__ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID) ON DELETE CASCADE,
+	Source_Location__ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
 	Destination_Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
 	PRIMARY KEY (Source_Location__ID, Destination_Location_ID)
 )
@@ -40,7 +40,7 @@ CREATE TABLE LocationsConnetions(
 -- Lista postaci
 CREATE TABLE Characters(
 	Character_ID INT PRIMARY KEY IDENTITY(1,1),
-	Player_ID INT NOT NULL FOREIGN KEY REFERENCES Players(Player_ID) ON DELETE CASCADE,
+	Player_ID INT NOT NULL FOREIGN KEY REFERENCES Players(Player_ID),
 	Guild_ID INT FOREIGN KEY REFERENCES Guilds(Guild_ID),
 	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
 	Nick NVARCHAR(32) UNIQUE NOT NULL,
@@ -64,8 +64,8 @@ CREATE TABLE Items (
 
 --Ekwipunek gracza
 CREATE TABLE Inventory (
-	Character_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID) ON DELETE CASCADE,
-	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
+	Character_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID) ,
+	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID) ,
 	Item_lvl INT,
 	Item_amount INT NOT NULL,
 	PRIMARY KEY (Character_ID, Item_ID, Item_lvl)
@@ -117,10 +117,10 @@ CREATE TABLE Enemies (
 
 --Lista przedmiotów które wypadaj¹
 CREATE TABLE EnemyDrops (
-	NPC_ID INT NOT NULL FOREIGN KEY REFERENCES Enemies(Enemy_ID),
+	Enemy_ID INT NOT NULL FOREIGN KEY REFERENCES Enemies(Enemy_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
 	Drop_chance FLOAT NOT NULL
-	PRIMARY KEY (NPC_ID, Item_ID)
+	PRIMARY KEY (Enemy_ID, Item_ID)
 )
 
 --Lista Przyjaznych NPC
@@ -160,16 +160,16 @@ CREATE TABLE Quests(
 	Quest_desc NVARCHAR(256) /*UNIQUE*/ NOT NULL,
 	Quest_Giver  INT FOREIGN KEY REFERENCES NPCs(NPC_ID),
 	--warunki wygranej
-	Npc_ID INT FOREIGN KEY REFERENCES NPCs(NPC_ID),
-	Item_ID INT FOREIGN KEY REFERENCES Items(Item_ID),
+	Npc_ID INT FOREIGN KEY REFERENCES NPCs(NPC_ID) ,
+	Item_ID INT FOREIGN KEY REFERENCES Items(Item_ID)  ,
 	Item_lvl INT,
 	Item_amount INT
 )
 
 --Lista nagród
 CREATE TABLE Rewards(
-	Quest_ID INT NOT NULL REFERENCES Quests(Quest_ID),
-	Item_ID INT NOT NULL REFERENCES Items(Item_ID),
+	Quest_ID INT NOT NULL REFERENCES Quests(Quest_ID) ,
+	Item_ID INT NOT NULL REFERENCES Items(Item_ID) ,
 	Item_lvl INT,
 	Amount INT NOT NULL
 	PRIMARY KEY(Quest_ID, Item_ID, Item_lvl)

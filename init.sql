@@ -31,6 +31,12 @@ CREATE TABLE Locations(
 	Location_lvl INT NOT NULL
 )
 
+CREATE TABLE LocationsConnetions(
+	Location_a_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
+	Location_b_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
+	PRIMARY KEY (Location_a_ID, Location_b_ID)
+)
+
 -- Lista postaci
 CREATE TABLE Characters(
 	Character_ID INT PRIMARY KEY IDENTITY(1,1),

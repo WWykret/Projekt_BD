@@ -4,8 +4,6 @@ IF DB_ID('Project') IS NOT NULL
 
 CREATE DATABASE Project
 
-GO
-
 -- Lista graczy
 CREATE TABLE Project.dbo.Players(
 	Player_ID INT PRIMARY KEY IDENTITY(1,1),
@@ -17,7 +15,7 @@ CREATE TABLE Project.dbo.Players(
 CREATE TABLE Project.dbo.Guilds(
 	Guild_ID INT PRIMARY KEY IDENTITY(1,1),
 	-- Guild_owner INT NOT NULL REFERENCES -- nie wiadomo co references co
-	Name NVARCHAR(32) NOT NULL UNIQUE,
+	Name NVARCHAR(32) UNIQUE NOT NULL,
 	Guild_lvl INT NOT NULL,
 	Guild_exp INT NOT NULL
 )
@@ -25,7 +23,7 @@ CREATE TABLE Project.dbo.Guilds(
 --Lista lokacji
 CREATE TABLE Project.dbo.Locations(
 	Location_ID INT PRIMARY KEY IDENTITY(1,1),
-	Name NVARCHAR(32) NOT NULL UNIQUE,
+	Name NVARCHAR(32) UNIQUE NOT NULL,
 	Location_lvl INT NOT NULL
 )
 
@@ -48,7 +46,7 @@ CREATE TABLE Project.dbo.Characters(
 --Lista przedmiotów
 CREATE TABLE Project.dbo.Items (
 	Item_ID INT PRIMARY KEY IDENTITY(1,1),
-	Name NVARCHAR(32) NOT NULL UNIQUE,
+	Name NVARCHAR(32) UNIQUE NOT NULL,
 	Atack INT,
 	Defence INT,
 	Mana INT,
@@ -67,7 +65,7 @@ CREATE TABLE Project.dbo.Inventory (
 --Lista wszystkich statusów
 CREATE TABLE Project.dbo.Statuses (
 	Status_ID INT PRIMARY KEY IDENTITY(1,1),
-	Name NVARCHAR(32) NOT NULL UNIQUE,
+	Name NVARCHAR(32) UNIQUE NOT NULL,
 	Atack INT,
 	Defence INT,
 	Mana INT,
@@ -96,7 +94,8 @@ CREATE TABLE Project.dbo.Banned (
 --Lista Przeciwników
 CREATE TABLE Project.dbo.Enemies (
 	Enemy_ID INT PRIMARY KEY IDENTITY(1,1),
-	Name NVARCHAR(32) NOT NULL UNIQUE,
+	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Project.dbo.Locations(Location_ID), --potwory przypisane do konkretnych lokacji
+	Name NVARCHAR(32) UNIQUE NOT NULL,
 	Hp INT NOT NULL,
 	Defence INT NOT NULL,
 	Atack INT NOT NULL,
@@ -109,6 +108,7 @@ CREATE TABLE Project.dbo.EnemyDrops (
 	Enemy_ID INT NOT NULL FOREIGN KEY REFERENCES Project.dbo.Enemies(Enemy_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Project.dbo.Items(Item_ID),
 	Drop_chance FLOAT NOT NULL
+	PRIMARY KEY (Enemy_ID, Item_ID)
 )
 
 --Lista NPC
@@ -116,7 +116,7 @@ CREATE TABLE Project.dbo.NPCs (
 	NPC_ID INT PRIMARY KEY IDENTITY(1,1),
 	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Project.dbo.Locations(Location_ID),
 	Store_ID INT UNIQUE, --ew. póŸniej dodaæ sequence
-	Name NVARCHAR(32) NOT NULL UNIQUE
+	Name NVARCHAR(32) UNIQUE NOT NULL
 )
 
 --Lista sklepów
@@ -125,7 +125,7 @@ CREATE TABLE Project.dbo.Stores (
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Project.dbo.Items(Item_ID),
 	Item_lvl INT NOT NULL,
 	Amount INT NOT NULL,
-	Cost INT NOT NULL
+	Unit_cost INT NOT NULL
 	PRIMARY KEY (Store_ID, Item_ID, Item_lvl)
 )
 
@@ -134,7 +134,7 @@ CREATE TABLE Project.dbo.AuctionHouse (
 	Offer_ID INT NOT NULL PRIMARY KEY IDENTITY(1,1),
 	Seller_ID INT NOT NULL FOREIGN KEY REFERENCES Project.dbo.Characters(Character_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Project.dbo.Items(Item_ID),
-	Item_LVL INT NOT NULL,
+	Item_lvl INT,
 	Amount INT NOT NULL,
 	Highest_bid INT NOT NULL,
 	Highest_bidder INT FOREIGN KEY REFERENCES Project.dbo.Characters(Character_ID),
@@ -146,13 +146,13 @@ CREATE TABLE Project.dbo.AuctionHouse (
 CREATE TABLE Project.dbo.Quests(
 	Quest_ID INT NOT NULL PRIMARY KEY IDENTITY(1,1),
 	Min_lvl INT NOT NULL,
-	Quest_name NVARCHAR(32) NOT NULL UNIQUE,
-	Quest_desc NVARCHAR(256) NOT NULL,
+	Quest_name NVARCHAR(32) UNIQUE NOT NULL,
+	Quest_desc NVARCHAR(256) /*UNIQUE*/ NOT NULL,
 	--warunki wygranej
 	Npc_ID INT FOREIGN KEY REFERENCES Project.dbo.NPCs(NPC_ID),
 	Item_ID INT FOREIGN KEY REFERENCES Project.dbo.Items(Item_ID),
-	Item_lvl INT NOT NULL,
-	Item_amount INT NOT NULL
+	Item_lvl INT,
+	Item_amount INT
 )
 
 --Tabela po³¹czeñ zadañ
@@ -166,7 +166,7 @@ CREATE TABLE Project.dbo.QuestConnetions(
 CREATE TABLE Project.dbo.Rewards(
 	Quest_ID INT NOT NULL REFERENCES Project.dbo.Quests(Quest_ID),
 	Item_ID INT NOT NULL REFERENCES Project.dbo.Items(Item_ID),
-	Item_lvl INT NOT NULL,
+	Item_lvl INT,
 	Amount INT NOT NULL
 	PRIMARY KEY(Quest_ID, Item_ID, Item_lvl)
 )

@@ -31,6 +31,12 @@ CREATE TABLE Locations(
 	Location_lvl INT NOT NULL
 )
 
+CREATE TABLE LocationsConnetions(
+	Location_a_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
+	Location_b_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
+	PRIMARY KEY (Location_a_ID, Location_b_ID)
+)
+
 -- Lista postaci
 CREATE TABLE Characters(
 	Character_ID INT PRIMARY KEY IDENTITY(1,1),
@@ -172,7 +178,7 @@ CREATE TABLE Rewards(
 	Amount INT NOT NULL
 	PRIMARY KEY(Quest_ID, Item_ID, Item_lvl)
 )
-
+/*
 --WSTAWIANIE PIERWSZYCH PRZYK£ADOWYCH DANYCH DO TABEL
 INSERT INTO Players VALUES
 (N'password 123', 'email@wp.pl'),
@@ -189,3 +195,4 @@ INSERT INTO Locations VALUES
 (N'Gwiazda neutronowa', 5)
 
 -- INSERT INTO Characters VALUES
+*/

@@ -38,11 +38,11 @@ CREATE TABLE Characters(
 	Guild_ID INT FOREIGN KEY REFERENCES Guilds(Guild_ID),
 	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
 	Nick NVARCHAR(32) UNIQUE NOT NULL,
-	Max_hp INT NOT NULL,
-	Hp INT NOT NULL,
-	Lvl INT NOT NULL,
-	Character_exp INT NOT NULL,
-	Gold INT NOT NULL
+	Max_hp INT NOT NULL DEFAULT 100,
+	Hp INT NOT NULL DEFAULT 100,
+	Lvl INT NOT NULL DEFAULT 1,
+	Character_exp INT NOT NULL DEFAULT 0,
+	Gold INT NOT NULL DEFAULT 50
 )
 
 ALTER TABLE Guilds ADD CONSTRAINT fk_owner FOREIGN KEY(Guild_owner) REFERENCES Characters(Character_ID)
@@ -72,7 +72,7 @@ CREATE TABLE Statuses (
 	Atack INT,
 	Defence INT,
 	Hp INT,
-	Duration INT NOT NULL, --w sekundach
+	Duration INT NOT NULL, --w turach
 	Chance FLOAT NOT NULL --procent na na³o¿enie
 )
 
@@ -172,3 +172,20 @@ CREATE TABLE Rewards(
 	Amount INT NOT NULL
 	PRIMARY KEY(Quest_ID, Item_ID, Item_lvl)
 )
+
+--WSTAWIANIE PIERWSZYCH PRZYK£ADOWYCH DANYCH DO TABEL
+INSERT INTO Players VALUES
+(N'password 123', 'email@wp.pl'),
+(N'password 321', 'email@wp.pl'),
+(N'password xxx', 'email@wp.pl'),
+(N'password 832', 'email@wp.pl'),
+(N'password 666', 'email@wp.pl')
+
+INSERT INTO Locations VALUES
+(N'Pi¿mowy jar', 1),
+(N'Jarowy pi¿m', 2),
+(N'Mordor', 3),
+(N'FAIS', 4),
+(N'Gwiazda neutronowa', 5)
+
+-- INSERT INTO Characters VALUES

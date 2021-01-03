@@ -35,9 +35,9 @@ CREATE TABLE Locations(
 CREATE TABLE Characters(
 	Character_ID INT PRIMARY KEY IDENTITY(1,1),
 	Player_ID INT NOT NULL FOREIGN KEY REFERENCES Players(Player_ID),
-	Guild_ID INT FOREIGN KEY REFERENCES Guilds(Guild_ID),
-	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
 	Nick NVARCHAR(32) UNIQUE NOT NULL,
+	Guild_ID INT FOREIGN KEY REFERENCES Guilds(Guild_ID) DEFAULT NULL,
+	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID) DEFAULT 1,
 	Max_hp INT NOT NULL DEFAULT 100,
 	Hp INT NOT NULL DEFAULT 100,
 	Lvl INT NOT NULL DEFAULT 1,
@@ -176,10 +176,10 @@ CREATE TABLE Rewards(
 --WSTAWIANIE PIERWSZYCH PRZYK£ADOWYCH DANYCH DO TABEL
 INSERT INTO Players VALUES
 (N'password 123', 'email@wp.pl'),
-(N'password 321', 'email@wp.pl'),
-(N'password xxx', 'email@wp.pl'),
-(N'password 832', 'email@wp.pl'),
-(N'password 666', 'email@wp.pl')
+(N'password 321', 'email1@wp.pl'),
+(N'password xxx', 'email2@wp.pl'),
+(N'password 832', 'email3@wp.pl'),
+(N'password 666', 'email4@wp.pl')
 
 INSERT INTO Locations VALUES
 (N'Pi¿mowy jar', 1),
@@ -188,4 +188,11 @@ INSERT INTO Locations VALUES
 (N'FAIS', 4),
 (N'Gwiazda neutronowa', 5)
 
--- INSERT INTO Characters VALUES
+INSERT INTO Characters(Player_ID, Nick) VALUES
+(1, N'Dunk_man'),
+(1, N'Dunk_man2'),
+(2, N'Dunk_man3'),
+(3, N'Dunk_man4'),
+(4, N'Dunk_man5'),
+(4, N'Dunk_man6'),
+(5, N'Dunk_man7')

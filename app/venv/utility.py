@@ -17,7 +17,7 @@ def cls():
 
 
 #FUNKCJE
-def login() -> bool:
+def login() -> int:
     cls()
     email = input('Email: ')
     password = input('Hasło: ')
@@ -46,3 +46,5 @@ def ban_player():
         EXEC BanPlayer @Nick=N'{nick}', @Duration='{duration}', @Reason=N'{reason}'
     ''')
     conn.commit()
+
+def get_characters():

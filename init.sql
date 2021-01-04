@@ -185,11 +185,11 @@ CREATE TABLE Rewards(
 
 --WSTAWIANIE PIERWSZYCH PRZYK£ADOWYCH DANYCH DO TABEL
 INSERT INTO Players VALUES
-(N'password 123', 'email@wp.pl'),
-(N'password 321', 'email@wp.pl'),
-(N'password xxx', 'email@wp.pl'),
-(N'password 832', 'email@wp.pl'),
-(N'password 666', 'email@wp.pl')
+(N'password 123', 'email1@wp.pl'),
+(N'password 321', 'email2@wp.pl'),
+(N'password xxx', 'email3@wp.pl'),
+(N'password 832', 'email4@wp.pl'),
+(N'password 666', 'email5@wp.pl')
 
 INSERT INTO Locations VALUES
 (N'Pi¿mowy jar', 1),

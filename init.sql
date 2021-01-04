@@ -182,7 +182,7 @@ CREATE TABLE Rewards(
 	Amount INT NOT NULL
 	PRIMARY KEY(Quest_ID, Item_ID, Item_lvl)
 )
-
+/*
 --WSTAWIANIE PIERWSZYCH PRZYK£ADOWYCH DANYCH DO TABEL
 INSERT INTO Players VALUES
 (N'password 123', 'email@wp.pl'),
@@ -199,72 +199,5 @@ INSERT INTO Locations VALUES
 (N'Gwiazda neutronowa', 5)
 
 -- INSERT INTO Characters VALUES
+*/
 
-GO
---funkcja wypisujaca przedmioty nalezace do danej postaci
-CREATE FUNCTION CharacterInventory (
-    @Character_ID INT
-)
-RETURNS TABLE
-AS
-RETURN
-    SELECT It.Name, Inv.Item_lvl, Inv.Item_amount 
-    FROM Inventory Inv
-	LEFT JOIN Items It ON Inv.Item_ID=It.Item_ID
-	WHERE Inv.Character_ID=@Character_ID
-
-GO
---funkcja wypisujaca postacie utworzone przez danego gracza
-CREATE FUNCTION PlayerCharacters (
-    @Player_ID INT
-)
-RETURNS TABLE
-AS
-RETURN
-    SELECT C.Nick, G.Name GuildName, L.Name CurrentLocation, C.Lvl, C.Gold
-    FROM Characters C
-	LEFT JOIN Guilds G ON C.Guild_ID=G.Guild_ID
-	LEFT JOIN Locations L ON C.Location_ID=L.Location_ID
-	WHERE C.Player_ID=@Player_ID
-
-GO
---funkcja wypisuj¹ca postacie nalezace do danej guildi
-CREATE FUNCTION CharactersInGuild (
-    @Guild_ID INT
-)
-RETURNS TABLE
-AS
-RETURN
-    SELECT Nick, Lvl, Gold
-    FROM Characters C
-	WHERE C.Guild_ID=@Guild_ID
-
-GO
-
---funkcja wypisuj¹ca wszystkich przeciwnikow w danej lokacji
-CREATE FUNCTION EnemiesInLocation (
-    @Location_ID INT
-)
-RETURNS TABLE
-AS
-RETURN
-    SELECT E.Enemy_ID, N.Name
-    FROM Enemies E 
-	LEFT JOIN NPCs N ON E.Enemy_ID=N.NPC_ID
-	WHERE N.Location_ID=@Location_ID
-
-GO
-
---funkcja wypisuj¹ca wszystkich przyjaznych NPC w danej lokacji
-CREATE FUNCTION NPCInLocation (
-    @Location_ID INT
-)
-RETURNS TABLE
-AS
-RETURN
-    SELECT F.Friend_ID, N.Name, F.Store_ID
-    FROM Friends F
-	LEFT JOIN NPCs N ON F.Friend_ID=N.NPC_ID
-	WHERE N.Location_ID=@Location_ID
-
-GO

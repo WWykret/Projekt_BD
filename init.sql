@@ -202,3 +202,15 @@ INSERT INTO Characters(Player_ID, Nick) VALUES
 (4, N'Dunk_man5'),
 (4, N'Dunk_man6'),
 (5, N'Dunk_man7')
+
+-- SELECT * FROM Banned
+
+-- EXEC CreateCharacter @Nick=N'1257', @PlayerID=1
+
+-- EXEC BanPlayer @Nick='Dunk_man', @Duration=5, @Reason='I Like placek'
+
+-- SELECT dbo.Register(N'email4@wp.pl', N'pass123')
+
+SELECT * FROM Players
+
+SELECT Email FROM Players

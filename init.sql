@@ -32,18 +32,18 @@ CREATE TABLE Locations(
 )
 
 CREATE TABLE LocationsConnetions(
-	Source_Location__ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
-	Destination_Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
-	PRIMARY KEY (Source_Location__ID, Destination_Location_ID)
+	Location_a_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
+	Location_b_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
+	PRIMARY KEY (Location_a_ID, Location_b_ID)
 )
 
 -- Lista postaci
 CREATE TABLE Characters(
 	Character_ID INT PRIMARY KEY IDENTITY(1,1),
 	Player_ID INT NOT NULL FOREIGN KEY REFERENCES Players(Player_ID),
-	Guild_ID INT FOREIGN KEY REFERENCES Guilds(Guild_ID),
-	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
 	Nick NVARCHAR(32) UNIQUE NOT NULL,
+	Guild_ID INT FOREIGN KEY REFERENCES Guilds(Guild_ID) DEFAULT NULL,
+	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID) DEFAULT 1,
 	Max_hp INT NOT NULL DEFAULT 100,
 	Hp INT NOT NULL DEFAULT 100,
 	Lvl INT NOT NULL DEFAULT 1,
@@ -64,8 +64,8 @@ CREATE TABLE Items (
 
 --Ekwipunek gracza
 CREATE TABLE Inventory (
-	Character_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID) ,
-	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID) ,
+	Character_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID),
+	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
 	Item_lvl INT,
 	Item_amount INT NOT NULL,
 	PRIMARY KEY (Character_ID, Item_ID, Item_lvl)
@@ -99,16 +99,11 @@ CREATE TABLE Banned (
 	PRIMARY KEY (Player_ID, Start)
 )
 
---Lista wszystkich NPC
-CREATE TABLE NPCs (
-	NPC_ID INT PRIMARY KEY IDENTITY(1,1),
-	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
-	Name NVARCHAR(32) UNIQUE NOT NULL
-)
-
 --Lista Przeciwników
 CREATE TABLE Enemies (
-	Enemy_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID),
+	Enemy_ID INT PRIMARY KEY IDENTITY(1,1),
+	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID), --potwory przypisane do konkretnych lokacji
+	Name NVARCHAR(32) UNIQUE NOT NULL,
 	Hp INT NOT NULL,
 	Defence INT NOT NULL,
 	Atack INT NOT NULL,
@@ -124,15 +119,17 @@ CREATE TABLE EnemyDrops (
 	PRIMARY KEY (Enemy_ID, Item_ID)
 )
 
---Lista Przyjaznych NPC
-CREATE TABLE Friends (
-	Friend_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID),
+--Lista NPC
+CREATE TABLE NPCs (
+	NPC_ID INT PRIMARY KEY IDENTITY(1,1),
+	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
 	Store_ID INT UNIQUE, --ew. póŸniej dodaæ sequence
+	Name NVARCHAR(32) UNIQUE NOT NULL
 )
 
 --Lista sklepów
 CREATE TABLE Stores (
-	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID),
+	Store_ID INT NOT NULL FOREIGN KEY REFERENCES NPCs(Store_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
 	Item_lvl INT NOT NULL,
 	Amount INT NOT NULL,
@@ -146,18 +143,11 @@ CREATE TABLE AuctionHouse (
 	Seller_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
 	Item_lvl INT,
-	Starting_Price INT NOT NULL,
+	Amount INT NOT NULL,
+	Highest_bid INT NOT NULL,
+	Highest_bidder INT FOREIGN KEY REFERENCES Characters(Character_ID),
 	Beggin_date DATE NOT NULL,
 	End_date DATE NOT NULL
-)
-
---oferty w domu aukcyjnym
-CREATE TABLE AuctionHouseBids (
-	Offer_ID INT NOT NULL FOREIGN KEY REFERENCES AuctionHouse(Offer_ID),
-	Bidder_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID),
-	Bid_date DATE NOT NULL,
-	Bid_amount INT NOT NULL
-	PRIMARY KEY (Offer_ID,Bidder_ID,Bid_date)
 )
 
 --Lista zadañ
@@ -166,30 +156,36 @@ CREATE TABLE Quests(
 	Min_lvl INT NOT NULL,
 	Quest_name NVARCHAR(32) UNIQUE NOT NULL,
 	Quest_desc NVARCHAR(256) /*UNIQUE*/ NOT NULL,
-	Quest_Giver  INT FOREIGN KEY REFERENCES NPCs(NPC_ID),
 	--warunki wygranej
-	Npc_ID INT FOREIGN KEY REFERENCES NPCs(NPC_ID) ,
-	Item_ID INT FOREIGN KEY REFERENCES Items(Item_ID)  ,
+	Npc_ID INT FOREIGN KEY REFERENCES NPCs(NPC_ID),
+	Item_ID INT FOREIGN KEY REFERENCES Items(Item_ID),
 	Item_lvl INT,
 	Item_amount INT
 )
 
+--Tabela po³¹czeñ zadañ
+CREATE TABLE QuestConnetions(
+	Quest_ID INT NOT NULL FOREIGN KEY REFERENCES Quests(Quest_ID),
+	Quest_required INT NOT NULL FOREIGN KEY REFERENCES Quests(Quest_ID),
+	PRIMARY KEY (Quest_ID, Quest_required)
+)
+
 --Lista nagród
 CREATE TABLE Rewards(
-	Quest_ID INT NOT NULL REFERENCES Quests(Quest_ID) ,
-	Item_ID INT NOT NULL REFERENCES Items(Item_ID) ,
+	Quest_ID INT NOT NULL REFERENCES Quests(Quest_ID),
+	Item_ID INT NOT NULL REFERENCES Items(Item_ID),
 	Item_lvl INT,
 	Amount INT NOT NULL
 	PRIMARY KEY(Quest_ID, Item_ID, Item_lvl)
 )
-/*
+
 --WSTAWIANIE PIERWSZYCH PRZYK£ADOWYCH DANYCH DO TABEL
 INSERT INTO Players VALUES
 (N'password 123', 'email@wp.pl'),
-(N'password 321', 'email@wp.pl'),
-(N'password xxx', 'email@wp.pl'),
-(N'password 832', 'email@wp.pl'),
-(N'password 666', 'email@wp.pl')
+(N'password 321', 'email1@wp.pl'),
+(N'password xxx', 'email2@wp.pl'),
+(N'password 832', 'email3@wp.pl'),
+(N'password 666', 'email4@wp.pl')
 
 INSERT INTO Locations VALUES
 (N'Pi¿mowy jar', 1),
@@ -198,74 +194,23 @@ INSERT INTO Locations VALUES
 (N'FAIS', 4),
 (N'Gwiazda neutronowa', 5)
 
--- INSERT INTO Characters VALUES
-*/
+INSERT INTO Characters(Player_ID, Nick) VALUES
+(1, N'Dunk_man'),
+(1, N'Dunk_man2'),
+(2, N'Dunk_man3'),
+(3, N'Dunk_man4'),
+(4, N'Dunk_man5'),
+(4, N'Dunk_man6'),
+(5, N'Dunk_man7')
 
-GO
---funkcja wypisujaca przedmioty nalezace do danej postaci
-CREATE FUNCTION CharacterInventory (
-    @Character_ID INT
-)
-RETURNS TABLE
-AS
-RETURN
-    SELECT It.Name, Inv.Item_lvl, Inv.Item_amount 
-    FROM Inventory Inv
-	LEFT JOIN Items It ON Inv.Item_ID=It.Item_ID
-	WHERE Inv.Character_ID=@Character_ID
+-- SELECT * FROM Banned
 
-GO
---funkcja wypisujaca postacie utworzone przez danego gracza
-CREATE FUNCTION PlayerCharacters (
-    @Player_ID INT
-)
-RETURNS TABLE
-AS
-RETURN
-    SELECT C.Nick, G.Name GuildName, L.Name CurrentLocation, C.Lvl, C.Gold
-    FROM Characters C
-	LEFT JOIN Guilds G ON C.Guild_ID=G.Guild_ID
-	LEFT JOIN Locations L ON C.Location_ID=L.Location_ID
-	WHERE C.Player_ID=@Player_ID
+-- EXEC CreateCharacter @Nick=N'1257', @PlayerID=1
 
-GO
---funkcja wypisuj¹ca postacie nalezace do danej guildi
-CREATE FUNCTION CharactersInGuild (
-    @Guild_ID INT
-)
-RETURNS TABLE
-AS
-RETURN
-    SELECT Nick, Lvl, Gold
-    FROM Characters C
-	WHERE C.Guild_ID=@Guild_ID
+-- EXEC BanPlayer @Nick='Dunk_man', @Duration=5, @Reason='I Like placek'
 
-GO
+-- SELECT dbo.Register(N'email4@wp.pl', N'pass123')
 
---funkcja wypisuj¹ca wszystkich przeciwnikow w danej lokacji
-CREATE FUNCTION EnemiesInLocation (
-    @Location_ID INT
-)
-RETURNS TABLE
-AS
-RETURN
-    SELECT E.Enemy_ID, N.Name
-    FROM Enemies E 
-	LEFT JOIN NPCs N ON E.Enemy_ID=N.NPC_ID
-	WHERE N.Location_ID=@Location_ID
+SELECT * FROM Players
 
-GO
-
---funkcja wypisuj¹ca wszystkich przyjaznych NPC w danej lokacji
-CREATE FUNCTION NPCInLocation (
-    @Location_ID INT
-)
-RETURNS TABLE
-AS
-RETURN
-    SELECT F.Friend_ID, N.Name, F.Store_ID
-    FROM Friends F
-	LEFT JOIN NPCs N ON F.Friend_ID=N.NPC_ID
-	WHERE N.Location_ID=@Location_ID
-
-GO
+SELECT Email FROM Players

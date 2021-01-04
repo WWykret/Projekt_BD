@@ -18,7 +18,7 @@ GO
 CREATE PROCEDURE Register (@Email NVARCHAR(64), @Password NVARCHAR(64))
 AS
 	IF @Email NOT IN (SELECT Email FROM Players)
-		INSERT INTO Players VALUES (@Email, @Password)
+		INSERT INTO Players VALUES (@Password, @Email)
 
 GO
 

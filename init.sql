@@ -98,6 +98,7 @@ CREATE TABLE Banned (
 	Reason NVARCHAR(256) NOT NULL
 	PRIMARY KEY (Player_ID, Start)
 )
+
 --Lista wszystkich NPC
 CREATE TABLE NPCs (
 	NPC_ID INT PRIMARY KEY IDENTITY(1,1),
@@ -145,11 +146,18 @@ CREATE TABLE AuctionHouse (
 	Seller_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
 	Item_lvl INT,
-	Amount INT NOT NULL,
-	Highest_bid INT NOT NULL,
-	Highest_bidder INT FOREIGN KEY REFERENCES Characters(Character_ID),
+	Starting_Price INT NOT NULL,
 	Beggin_date DATE NOT NULL,
 	End_date DATE NOT NULL
+)
+
+--oferty w domu aukcyjnym
+CREATE TABLE AuctionHouseBids (
+	Offer_ID INT NOT NULL FOREIGN KEY REFERENCES AuctionHouse(Offer_ID),
+	Bidder_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID),
+	Bid_date DATE NOT NULL,
+	Bid_amount INT NOT NULL
+	PRIMARY KEY (Offer_ID,Bidder_ID,Bid_date)
 )
 
 --Lista zadañ
@@ -192,3 +200,72 @@ INSERT INTO Locations VALUES
 
 -- INSERT INTO Characters VALUES
 */
+
+GO
+--funkcja wypisujaca przedmioty nalezace do danej postaci
+CREATE FUNCTION CharacterInventory (
+    @Character_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT It.Name, Inv.Item_lvl, Inv.Item_amount 
+    FROM Inventory Inv
+	LEFT JOIN Items It ON Inv.Item_ID=It.Item_ID
+	WHERE Inv.Character_ID=@Character_ID
+
+GO
+--funkcja wypisujaca postacie utworzone przez danego gracza
+CREATE FUNCTION PlayerCharacters (
+    @Player_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT C.Nick, G.Name GuildName, L.Name CurrentLocation, C.Lvl, C.Gold
+    FROM Characters C
+	LEFT JOIN Guilds G ON C.Guild_ID=G.Guild_ID
+	LEFT JOIN Locations L ON C.Location_ID=L.Location_ID
+	WHERE C.Player_ID=@Player_ID
+
+GO
+--funkcja wypisuj¹ca postacie nalezace do danej guildi
+CREATE FUNCTION CharactersInGuild (
+    @Guild_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT Nick, Lvl, Gold
+    FROM Characters C
+	WHERE C.Guild_ID=@Guild_ID
+
+GO
+
+--funkcja wypisuj¹ca wszystkich przeciwnikow w danej lokacji
+CREATE FUNCTION EnemiesInLocation (
+    @Location_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT E.Enemy_ID, N.Name
+    FROM Enemies E 
+	LEFT JOIN NPCs N ON E.Enemy_ID=N.NPC_ID
+	WHERE N.Location_ID=@Location_ID
+
+GO
+
+--funkcja wypisuj¹ca wszystkich przyjaznych NPC w danej lokacji
+CREATE FUNCTION NPCInLocation (
+    @Location_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT F.Friend_ID, N.Name, F.Store_ID
+    FROM Friends F
+	LEFT JOIN NPCs N ON F.Friend_ID=N.NPC_ID
+	WHERE N.Location_ID=@Location_ID
+
+GO

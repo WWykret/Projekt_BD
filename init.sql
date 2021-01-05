@@ -70,7 +70,8 @@ CREATE TABLE Inventory (
 	Item_amount INT NOT NULL,
 	PRIMARY KEY (Character_ID, Item_ID, Item_lvl)
 )
-
+--to chyba jest w sumie nie potrzebne
+/*
 --Lista wszystkich statusów
 CREATE TABLE Statuses (
 	Status_ID INT PRIMARY KEY IDENTITY(1,1),
@@ -89,7 +90,7 @@ CREATE TABLE Effects (
 	Time_until_end INT NOT NULL
 	PRIMARY KEY (Character_ID, Status_ID)
 )
-
+*/
 --Lista Zbanowanych
 CREATE TABLE Banned (
 	Player_ID INT NOT NULL FOREIGN KEY REFERENCES Players(Player_ID),
@@ -113,7 +114,7 @@ CREATE TABLE Enemies (
 	Defence INT NOT NULL,
 	Atack INT NOT NULL,
 	Kill_exp INT NOT NULL,
-	Status_on_hit INT REFERENCES Statuses(Status_ID)
+	--Status_on_hit INT REFERENCES Statuses(Status_ID)  --to jest potencjalny powut zeby zachowac statusy, mozna tego uzyc do wyzwalacza
 )
 
 --Lista przedmiotów które wypadaj¹
@@ -135,7 +136,7 @@ CREATE TABLE Stores (
 	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
 	Item_lvl INT NOT NULL,
-	Amount INT NOT NULL,
+	--Amount INT NOT NULL, --to lepiej pominac, przyjac ze liczba jest inf
 	Unit_cost INT NOT NULL
 	PRIMARY KEY (Store_ID, Item_ID, Item_lvl)
 )
@@ -199,3 +200,337 @@ INSERT INTO Locations VALUES
 (N'Gwiazda neutronowa', 5)
 
 -- INSERT INTO Characters VALUES
+
+------procedury i funkcje i reszta gowna
+
+----widoki
+
+GO
+--Widok pokazujacy aktualnie zbanowanych graczy
+CREATE VIEW CurrentlyBanned AS
+	SELECT B.Player_ID
+	FROM Banned B
+	WHERE GETDATE() BETWEEN B.Start AND B.Finish
+GO
+
+----funkcje
+
+--Funkcja do logowania
+CREATE FUNCTION TryToLogin (@Email NVARCHAR(64), @Password NVARCHAR(64))
+RETURNS INT
+AS BEGIN
+	DECLARE @Res INT
+	IF (EXISTS(SELECT * FROM Players P WHERE Email=@Email AND Pass=@Password) AND NOT EXISTS(SELECT * FROM Players P JOIN Banned B ON P.Player_ID = B.Player_ID WHERE GETDATE() BETWEEN B.Start AND B.Finish AND P.Email=@Email))
+		SET @Res = 1
+	ELSE
+		SET @Res = 0
+	RETURN @Res
+END
+GO
+
+--funkcja wypisujaca przedmioty nalezace do danej postaci
+CREATE FUNCTION CharacterInventory (
+    @Character_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT It.Name, Inv.Item_lvl, Inv.Item_amount 
+    FROM Inventory Inv
+	LEFT JOIN Items It ON Inv.Item_ID=It.Item_ID
+	WHERE Inv.Character_ID=@Character_ID
+GO
+
+--funkcja wypisujaca postacie utworzone przez danego gracza
+CREATE FUNCTION PlayerCharacters (
+    @Player_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT C.Nick, G.Name GuildName, L.Name CurrentLocation, C.Lvl, C.Gold
+    FROM Characters C
+	LEFT JOIN Guilds G ON C.Guild_ID=G.Guild_ID
+	LEFT JOIN Locations L ON C.Location_ID=L.Location_ID
+	WHERE C.Player_ID=@Player_ID
+GO
+
+--funkcja wypisuj¹ca postacie nalezace do danej guildi
+CREATE FUNCTION CharactersInGuild (
+    @Guild_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT Nick, Lvl, Gold
+    FROM Characters C
+	WHERE C.Guild_ID=@Guild_ID
+GO
+
+
+--funkcja wypisuj¹ca wszystkich przeciwnikow w danej lokacji
+CREATE FUNCTION EnemiesInLocation (
+    @Location_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT E.Enemy_ID, N.Name
+    FROM Enemies E 
+	LEFT JOIN NPCs N ON E.Enemy_ID=N.NPC_ID
+	WHERE N.Location_ID=@Location_ID
+GO
+
+
+--funkcja wypisuj¹ca wszystkich przyjaznych NPC w danej lokacji
+CREATE FUNCTION FriendsInLocation (
+    @Location_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT F.Friend_ID, N.Name, F.Store_ID
+    FROM Friends F
+	LEFT JOIN NPCs N ON F.Friend_ID=N.NPC_ID
+	WHERE N.Location_ID=@Location_ID
+GO
+
+--funkcja wypisuj¹ca wszystkich lokacje do ktorych moze przejsc postac
+CREATE FUNCTION AccessibleLocations (
+    @Character_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT L.Location_ID, L.Name, L.Location_lvl
+    FROM (
+		SELECT *
+		FROM Characters
+		WHERE Character_ID=@Character_ID
+	) C
+	LEFT JOIN LocationsConnetions Lc ON C.Location_ID=Lc.Source_Location__ID
+	LEFT JOIN Locations L ON Lc.Destination_Location_ID=L.Location_ID
+GO
+
+--funkcja wypisuj¹ca wszystkie questy dawane przez danego przyjaznego NPC
+CREATE FUNCTION NPCsQuests (
+    @Friend_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT Q.Quest_ID, Q.Quest_name, Q.Min_lvl
+    FROM Quests Q
+	WHERE Q.Quest_Giver=@Friend_ID
+
+GO
+
+--funkcja wypisuj¹ca wszystkie questy dawane przez danego przyjaznego NPC
+CREATE FUNCTION AccessibleQuests (
+    @Friend_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT Q.Quest_ID, Q.Quest_name, Q.Min_lvl
+    FROM Quests Q
+	WHERE Q.Quest_Giver=@Friend_ID
+
+GO
+
+--funkcja wypisuj¹ca wszystkie przedmioty w danym sklepie
+CREATE FUNCTION ItemsInStore (
+    @Store_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT S.Item_ID, I.Name, S.Item_lvl, S.Unit_cost
+    FROM Stores S
+	LEFT JOIN Items I ON S.Item_ID=I.Item_ID
+	WHERE S.Store_ID=@Store_ID
+
+GO
+
+--funkcja wypisuj¹ca wszystkie nagrody przyznane za dany quest
+CREATE FUNCTION RwardsForQuest (
+    @Quest_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT R.Item_ID, I.Name, R.Item_lvl, R.Amount
+    FROM Rewards R
+	LEFT JOIN Items I ON R.Item_ID=I.Item_ID
+	WHERE R.Quest_ID=@Quest_ID
+
+GO
+
+----procedury
+
+--Procedura do rejestracji
+CREATE PROCEDURE Register (@Email NVARCHAR(64), @Password NVARCHAR(64))
+AS
+	IF @Email NOT IN (SELECT Email FROM Players)
+		INSERT INTO Players VALUES (@Password, @Email)
+
+GO
+
+--Procedura do dodawania postaci
+CREATE PROCEDURE CreateCharacter(@PlayerID INT, @Nick NVARCHAR(32))
+AS
+	IF @Nick NOT IN (SELECT Email FROM Players)
+		INSERT INTO Characters(Player_ID, Nick) VALUES (@PlayerID, @Nick)
+
+GO
+
+CREATE PROCEDURE BanPlayer(@Nick NVARCHAR(32), @Duration INT, @Reason NVARCHAR(256))
+AS
+	DECLARE @PlayerID INT
+	SET @PlayerID = (SELECT Player_ID FROM Characters WHERE Nick=@Nick)
+	DECLARE @EndDate DATE
+	SET @EndDate = DATEADD(DAY, @Duration, GETDATE())
+	INSERT INTO Banned VALUES (@PlayerID, GETDATE(), @EndDate, @Reason)
+
+GO
+
+CREATE PROCEDURE AttemptToMove(@Character_ID INT, @Destination_ID INT)
+AS
+BEGIN
+  DECLARE @Res INT
+	IF (EXISTS(
+		SELECT *
+		FROM LocationsConnetions Lc
+		JOIN Locations L ON Lc.Destination_Location_ID=L.Location_ID
+		WHERE Lc.Source_Location__ID = (
+			SELECT Location_ID
+			FROM Characters
+			WHERE Character_ID=@Character_ID)
+		AND
+			Lc.Destination_Location_ID = @Destination_ID
+		AND
+			L.Location_lvl <= (
+			SELECT Lvl
+			FROM Characters
+			WHERE Character_ID=@Character_ID)
+	))
+	BEGIN
+		SET @Res = 1
+		UPDATE Characters
+		SET Location_ID=@Destination_ID
+		WHERE Character_ID=@Character_ID
+	END
+	ELSE SET @Res = 0
+	RETURN @Res
+END
+GO
+
+CREATE PROCEDURE AttemptToBuy(@Character_ID INT, @Store_ID INT, @Item_ID INT, @Item_lvl INT, @Amount INT)
+AS
+BEGIN
+	DECLARE @Res INT
+	IF (EXISTS(
+	SELECT *
+	FROM Stores S
+	WHERE S.Store_ID=@Store_ID AND S.Item_ID=@Item_ID AND S.Item_lvl=@Item_lvl AND 
+	S.Item_lvl<=(
+		SELECT Lvl
+		FROM Characters
+		WHERE Character_ID=@Character_ID)
+	AND S.Unit_cost<= @Amount*(
+		SELECT Gold
+		FROM Characters
+		WHERE Character_ID=@Character_ID)
+	))
+	BEGIN
+		SET @Res = 1
+
+		UPDATE Characters
+		SET Gold-=@Amount*(
+			SELECT S.Unit_cost
+			FROM Stores S
+			WHERE S.Store_ID=@Store_ID AND S.Item_ID=@Item_ID AND S.Item_lvl=@Item_lvl
+		)
+		WHERE Character_ID=@Character_ID
+
+		INSERT INTO Inventory
+		VALUES (@Character_ID, @Item_ID, @Item_lvl,@Amount)
+
+	END
+	ELSE SET @Res = 0
+	RETURN @Res
+END
+GO
+--wyzwalacze
+
+CREATE TRIGGER addItem ON Inventory
+INSTEAD OF INSERT
+AS BEGIN
+
+	DECLARE @Character_ID INT;
+    DECLARE @Item_ID INT;
+    DECLARE @Item_lvl INT;
+	DECLARE @Item_amount INT;
+	
+    SELECT @Character_ID = Character_ID, @Item_ID = Item_lvl, @Item_lvl = Item_lvl, @Item_amount=Item_amount 
+	FROM INSERTED;
+
+    IF(EXISTS(
+		SELECT *
+		FROM Inventory I
+		WHERE I.Character_ID=@Character_ID AND I.Item_ID=@Item_ID AND I.Item_lvl=@Item_lvl
+	))
+	BEGIN
+
+		UPDATE Inventory
+		SET Item_amount+=Item_amount+(SELECT Item_amount FROM INSERTED )
+		WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
+
+	END 
+	ELSE
+	BEGIN
+
+		INSERT INTO Inventory
+		VALUES (@Character_ID, @Item_ID, @Item_lvl,@Item_amount)
+
+	END
+	
+
+END
+GO
+/*
+CREATE TRIGGER AutoLevelUp ON Characters
+INSTEAD  OF UPDATE
+AS BEGIN
+
+	DECLARE @Character_ID INT;
+    DECLARE @Exp_Gain INT;
+
+    SELECT @Character_ID = Character_ID, @Exp_Gain=Character_exp
+	FROM INSERTED;
+
+    IF(@Character_exp>=1000)
+	BEGIN
+
+		UPDATE Characters
+		SET Lvl+=@Character_exp/1000, Character_exp=@Character_exp%1000
+		WHERE Character_ID=@Character_ID
+
+	END 
+
+	DECLARE @Guild_ID INT;
+
+	SET @Guild_ID=(
+		SELECT Guild_ID
+		FROM Characters
+		WHERE @Character_ID=Character_ID)
+
+	IF(@Guild_ID IS NOT NULL)
+		UPDATE Characters
+		SET Lvl+=@Character_exp/1000, Character_exp=@Character_exp%1000
+		WHERE Character_ID=@Character_ID
+
+	END 
+END
+GO
+*/

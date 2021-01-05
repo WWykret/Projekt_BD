@@ -448,13 +448,13 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE RemoveMember(@Player_ID INT, @Guild_ID INT)
+CREATE PROCEDURE RemoveMember(@Character_ID INT, @Guild_ID INT)
 AS
 BEGIN
 	IF(EXISTS(
 		SELECT *
 		FROM Guilds
-		WHERE Guild_ID=@Guild_ID AND Guild_owner=@Player_ID
+		WHERE Guild_ID=@Guild_ID AND Guild_owner=@Character_ID
 		))
 	BEGIN
 		DELETE FROM Guilds
@@ -466,29 +466,29 @@ BEGIN
 		SET Members-=1
 		WHERE Guild_ID=@Guild_ID;
 
-		UPDATE Members
+		UPDATE Characters
 		SET @Guild_ID=NULL
 		WHERE Guild_ID=@Guild_ID;
 	END
 END
 GO
 
-CREATE PROCEDURE AddMember(@Player_ID INT, @Guild_ID INT)
+CREATE PROCEDURE AddMember(@Character_ID INT, @Guild_ID INT)
 AS
 BEGIN
 	IF(EXISTS(
 		SELECT *
 		FROM Characters
-		WHERE Player_ID=@Player_ID AND Guild_ID IS NOT NULL
+		WHERE @Character_ID=@Character_ID AND Guild_ID IS NOT NULL
 		))
 	BEGIN
 	DECLARE @CharactersGuild INT
 	SET @CharactersGuild=(
 		SELECT Guild_ID
 		FROM Characters
-		WHERE Player_ID=@Player_ID)
+		WHERE @Character_ID=@Character_ID)
 
-		EXEC RemoveMember @Player_ID=@Player_ID , @Guild_ID=@CharactersGuild
+		EXEC RemoveMember @Player_ID=@Character_ID , @Guild_ID=@CharactersGuild
 	END
 	ELSE 
 	BEGIN
@@ -496,13 +496,81 @@ BEGIN
 		SET Members+=1
 		WHERE Guild_ID=@Guild_ID;
 
-		UPDATE Members
+		UPDATE Characters
 		SET @Guild_ID=@Guild_ID
-		WHERE Player_ID=@Player_ID;
+		WHERE @Character_ID=@Character_ID;
 	END
 
 END
 GO
+
+
+CREATE PROCEDURE Death(@Character_ID INT)
+AS
+BEGIN
+	
+	DECLARE @Max_hp INT
+	SET @Max_hp=(
+		SELECT Max_hp
+		FROM Characters
+		WHERE Character_ID=@Character_ID)
+
+	UPDATE Characters
+	SET HP=@Max_hp, Gold=0
+	WHERE Character_ID=@Character_ID
+	
+END
+GO
+
+CREATE PROCEDURE Level_up(@Character_ID INT)
+AS
+BEGIN
+	
+		UPDATE Characters
+		SET Lvl+=1, Max_hp+=10
+		WHERE Character_ID=@Character_ID
+
+		UPDATE Characters
+		SET Hp=(
+			SELECT Max_hp
+			FROM Characters
+			WHERE Character_ID=@Character_ID)
+		WHERE Character_ID=@Character_ID
+	
+END
+GO
+
+
+CREATE PROCEDURE Gain_Exp(@Character_ID INT,@Exp_gain INT)
+AS
+BEGIN
+	
+	DECLARE @Max_hp INT
+	SET @Max_hp=(
+		SELECT Max_hp
+		FROM Characters
+		WHERE Character_ID=@Character_ID)
+
+	UPDATE Characters
+	SET Character_exp+=@Exp_gain
+	WHERE Character_ID=@Character_ID
+
+	WHILE(
+		SELECT Character_exp
+		FROM Characters
+		WHERE Character_ID=@Character_ID)>=1000
+	BEGIN
+		UPDATE Characters
+		SET Character_exp-=1000
+		WHERE Character_ID=@Character_ID
+
+		EXEC Level_up @Character_ID=@Character_ID
+
+	END
+	
+END
+GO
+
 
 --wyzwalacze
 
@@ -514,9 +582,12 @@ AS BEGIN
     DECLARE @Item_ID INT;
     DECLARE @Item_lvl INT;
 	DECLARE @Item_amount INT;
+
+	DECLARE @Item_Hp INT;
 	
-    SELECT @Character_ID = Character_ID, @Item_ID = Item_lvl, @Item_lvl = Item_lvl, @Item_amount=Item_amount 
-	FROM INSERTED;
+    SELECT @Character_ID = Character_ID, @Item_ID = Item_lvl, @Item_lvl = Item_lvl, @Item_amount=Item_amount , @Item_Hp=Hp 
+	FROM INSERTED I
+	JOIN Items It ON It.Item_ID=I.Item_ID;
 
     IF(EXISTS(
 		SELECT *
@@ -542,18 +613,10 @@ AS BEGIN
 
 	END
 
-	IF(EXISTS(
-		SELECT HP
-		FROM Items
-		WHERE @Item_ID=Item_ID AND HP IS NOT NULL
-	))
+	IF(@Item_Hp IS NOT NULL)
 	BEGIN
 	UPDATE Characters
-	SET Max_hp+=@Item_lvl*@Item_amount*(
-		SELECT HP
-		FROM Items
-		WHERE @Item_ID=Item_ID AND HP IS NOT NULL
-	)
+	SET Max_hp+=@Item_lvl*@Item_amount*@Item_Hp
 	WHERE Character_ID=@Character_ID
 
 	END
@@ -569,9 +632,12 @@ AS BEGIN
     DECLARE @Item_ID INT;
     DECLARE @Item_lvl INT;
 	DECLARE @Item_amount INT;
+
+	DECLARE @Item_Hp INT;
 	
-    SELECT @Character_ID = Character_ID, @Item_ID = Item_lvl, @Item_lvl = Item_lvl, @Item_amount=Item_amount 
-	FROM DELETED;
+    SELECT @Character_ID = Character_ID, @Item_ID = Item_lvl, @Item_lvl = Item_lvl, @Item_amount=Item_amount , @Item_Hp=Hp 
+	FROM DELETED D
+	JOIN Items I ON D.Item_ID=I.Item_ID;
 
     IF(@Item_amount<(
 		SELECT Item_amount
@@ -587,24 +653,20 @@ AS BEGIN
 	END 
 	ELSE
 	BEGIN
+		SET @Item_amount=(
+			SELECT Item_amount
+			FROM Inventory I
+			WHERE I.Character_ID=@Character_ID AND I.Item_ID=@Item_ID AND I.Item_lvl=@Item_lvl)
 		
 		DELETE FROM Inventory
 		WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
 
 	END
 
-	IF(EXISTS(
-		SELECT HP
-		FROM Items
-		WHERE @Item_ID=Item_ID AND HP IS NOT NULL
-	))
+	IF(@Item_Hp IS NOT NULL)
 	BEGIN
 	UPDATE Characters
-	SET Max_hp-=@Item_lvl*@Item_amount*(
-		SELECT HP
-		FROM Items
-		WHERE @Item_ID=Item_ID AND HP IS NOT NULL
-	)
+	SET Max_hp-=@Item_lvl*@Item_amount*@Item_Hp
 	WHERE Character_ID=@Character_ID
 
 	END
@@ -693,16 +755,24 @@ AS BEGIN
 
 END
 GO
-/*
-CREATE TRIGGER AutoLevelUp ON Characters
-AFTER DELETE
+
+CREATE TRIGGER DeleteCharacter ON Characters
+INSTEAD OF DELETE
 AS BEGIN
+	DECLARE @Character_ID INT
+	DECLARE @Guild_ID INT
 
-	END 
+	SELECT @Character_ID = Character_ID, @Guild_ID=Guild_ID
+	FROM DELETED;
+
+	EXEC RemoveMember @Character_ID=@Character_ID , @Guild_ID=@Guild_ID
+
+	DELETE FROM Characters
+	WHERE Character_ID=@Character_ID
+
 END
-*/
 
-*/
+/*
 --WSTAWIANIE PIERWSZYCH PRZYK£ADOWYCH DANYCH DO TABEL
 INSERT INTO Players VALUES
 (N'password 123', 'email1@wp.pl'),
@@ -758,3 +828,4 @@ INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 
 SELECT * FROM Characters C JOIN Inventory I ON C.Character_ID=I.Character_ID JOIN Items It On It.Item_ID=I.Item_ID
 
+*/

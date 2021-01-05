@@ -2,7 +2,7 @@ USE master
 
 -- Tworzenie pustej bazy danych
 IF DB_ID('Project') IS NOT NULL
-	DROP DATABASE Project
+    DROP DATABASE Project
 
 CREATE DATABASE Project
 
@@ -20,8 +20,11 @@ CREATE TABLE Guilds(
 	Guild_ID INT PRIMARY KEY IDENTITY(1,1),
 	Guild_owner INT NOT NULL,
 	Name NVARCHAR(32) UNIQUE NOT NULL,
+	Members INT NOT NULL DEFAULT 1,
+	/*
 	Guild_lvl INT NOT NULL,
 	Guild_exp INT NOT NULL
+	*/
 )
 
 --Lista lokacji
@@ -136,7 +139,7 @@ CREATE TABLE Stores (
 	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
 	Item_lvl INT NOT NULL,
-	--Amount INT NOT NULL, --to lepiej pominac, przyjac ze liczba jest inf
+	Amount INT NOT NULL,
 	Unit_cost INT NOT NULL
 	PRIMARY KEY (Store_ID, Item_ID, Item_lvl)
 )
@@ -462,9 +465,66 @@ BEGIN
 	RETURN @Res
 END
 GO
+
+CREATE PROCEDURE RemoveMember(@Player_ID INT, @Guild_ID INT)
+AS
+BEGIN
+	IF(EXISTS(
+		SELECT *
+		FROM Guilds
+		WHERE Guild_ID=@Guild_ID AND Guild_owner=@Player_ID
+		))
+	BEGIN
+		DELETE FROM Guilds
+		WHERE Guild_ID=@Guild_ID;
+	END
+	ELSE 
+	BEGIN
+		UPDATE Guilds
+		SET Members-=1
+		WHERE Guild_ID=@Guild_ID;
+
+		UPDATE Members
+		SET @Guild_ID=NULL
+		WHERE Guild_ID=@Guild_ID;
+	END
+END
+GO
+
+CREATE PROCEDURE AddMember(@Player_ID INT, @Guild_ID INT)
+AS
+BEGIN
+	IF(EXISTS(
+		SELECT *
+		FROM Characters
+		WHERE Player_ID=@Player_ID AND Guild_ID IS NOT NULL
+		))
+	BEGIN
+	DECLARE @CharactersGuild INT
+	SET @CharactersGuild=(
+		SELECT Guild_ID
+		FROM Characters
+		WHERE Player_ID=@Player_ID)
+
+		EXEC RemoveMember @Player_ID=@Player_ID , @Guild_ID=@CharactersGuild
+	END
+	ELSE 
+	BEGIN
+		UPDATE Guilds
+		SET Members+=1
+		WHERE Guild_ID=@Guild_ID;
+
+		UPDATE Members
+		SET @Guild_ID=@Guild_ID
+		WHERE Player_ID=@Player_ID;
+	END
+
+END
+GO
+
 --wyzwalacze
 
-CREATE TRIGGER addItem ON Inventory
+CREATE TRIGGER addItem ON Inventory--dodaje tylko jeden wierszu
 INSTEAD OF INSERT
 AS BEGIN
 
@@ -484,21 +544,92 @@ AS BEGIN
 	BEGIN
 
 		UPDATE Inventory
-		SET Item_amount+=Item_amount+(SELECT Item_amount FROM INSERTED )
+		SET Item_amount+=(SELECT Item_amount FROM INSERTED )
 		WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
 
 	END 
 	ELSE
 	BEGIN
+		
+		SELECT *
+		INTO Inventory
+		FROM INSERTED
 
-		INSERT INTO Inventory
-		VALUES (@Character_ID, @Item_ID, @Item_lvl,@Item_amount)
+		--INSERT INTO Inventory
+		--VALUES (@Character_ID, @Item_ID, @Item_lvl,@Item_amount)
 
 	END
-	
+
+	IF(EXISTS(
+		SELECT HP
+		FROM Items
+		WHERE @Item_ID=Item_ID AND HP IS NOT NULL
+	))
+	BEGIN
+	UPDATE Characters
+	SET Max_hp+=@Item_lvl*@Item_amount*(
+		SELECT HP
+		FROM Items
+		WHERE @Item_ID=Item_ID AND HP IS NOT NULL
+	)
+	WHERE Character_ID=@Character_ID
+
+	END
 
 END
 GO
+
+CREATE TRIGGER deleteItem ON Inventory--dodaje tylko jeden wierszu
+INSTEAD OF DELETE
+AS BEGIN
+
+	DECLARE @Character_ID INT;
+    DECLARE @Item_ID INT;
+    DECLARE @Item_lvl INT;
+	DECLARE @Item_amount INT;
+	
+    SELECT @Character_ID = Character_ID, @Item_ID = Item_lvl, @Item_lvl = Item_lvl, @Item_amount=Item_amount 
+	FROM DELETED;
+
+    IF(@Item_amount<(
+		SELECT Item_amount
+		FROM Inventory I
+		WHERE I.Character_ID=@Character_ID AND I.Item_ID=@Item_ID AND I.Item_lvl=@Item_lvl
+	))
+	BEGIN
+
+		UPDATE Inventory
+		SET Item_amount-=(SELECT Item_amount FROM INSERTED )
+		WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
+
+	END 
+	ELSE
+	BEGIN
+		
+		DELETE FROM Inventory
+		WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
+
+	END
+
+	IF(EXISTS(
+		SELECT HP
+		FROM Items
+		WHERE @Item_ID=Item_ID AND HP IS NOT NULL
+	))
+	BEGIN
+	UPDATE Characters
+	SET Max_hp-=@Item_lvl*@Item_amount*(
+		SELECT HP
+		FROM Items
+		WHERE @Item_ID=Item_ID AND HP IS NOT NULL
+	)
+	WHERE Character_ID=@Character_ID
+
+	END
+
+END
+GO
+
 /*
 CREATE TRIGGER AutoLevelUp ON Characters
 INSTEAD  OF UPDATE
@@ -533,5 +664,57 @@ AS BEGIN
 
 	END 
 END
+*/
+
 GO
+
+CREATE TRIGGER DeleteGuild ON Guilds
+INSTEAD OF DELETE 
+AS BEGIN
+
+	DECLARE @Giuld_ID INT;
+	SET @Giuld_ID =(
+		SELECT Guild_ID
+		FROM DELETED
+	)
+	UPDATE Characters
+	SET Guild_ID=NULL
+	WHERE Guild_ID=@Giuld_ID
+
+	DELETE FROM Guilds
+	WHERE Guild_ID=@Giuld_ID
+END
+GO
+
+CREATE TRIGGER CreteGuild ON Guilds
+AFTER INSERT
+AS BEGIN
+
+	DECLARE @Character_ID INT;
+	DECLARE @Giuld_ID INT;
+
+	SET @Character_ID =(
+		SELECT Guild_owner
+		FROM INSERTED
+	)
+	
+	
+	SET @Giuld_ID =(
+		SELECT Guild_ID
+		FROM INSERTED
+	)
+
+	UPDATE Characters
+	SET Guild_ID=@Giuld_ID
+	WHERE Character_ID=@Character_ID
+
+END
+GO
+/*
+CREATE TRIGGER AutoLevelUp ON Characters
+AFTER DELETE
+AS BEGIN
+
+	END 
+END
 */

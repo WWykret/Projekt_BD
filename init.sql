@@ -772,21 +772,13 @@ AS BEGIN
 
 END
 
-/*
---WSTAWIANIE PIERWSZYCH PRZYKÂ£ADOWYCH DANYCH DO TABEL
+GO
+
 INSERT INTO Players VALUES
-(N'password 123', 'email1@wp.pl'),
-(N'password 321', 'email2@wp.pl'),
-(N'password xxx', 'email3@wp.pl'),
-(N'password 832', 'email4@wp.pl'),
-(N'password 666', 'email5@wp.pl')
+('password 123', 'email1@wp.pl')
 
 INSERT INTO Locations VALUES
-(N'PiÂ¿mowy jar', 1),
-(N'Jarowy piÂ¿m', 2),
-(N'Mordor', 3),
-(N'FAIS', 4),
-(N'Gwiazda neutronowa', 5)
+('pi¿mowy jar', 1)
 
 INSERT INTO Characters(Player_ID, Nick, Location_ID) VALUES
 (1, 'Dunk_man1', 1),
@@ -812,10 +804,11 @@ INSERT INTO Enemies VALUES
 (5, 20, 5, 10, 10),
 (6, 5, 20, 5, 10)
 
-INSERT INTO Items Values
-('MÂ³ot Kawy', 10, NULL, NULL),
-('pierÅ“cieÃ± ASD', NULL, 10, NULL),
-('Zwolnienie z egz', NULL, NULL, 20)
+INSERT INTO Items VALUES
+('M³ot Kawy', 10, NULL, NULL),
+('pierœcieñ ASD', NULL, 10, NULL),
+('Zwolnienie z egz', NULL, NULL, 20),
+('Strza³a w kolanie', NULL, NULL, NULL)
 
 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (1, 1, 1, 3)
@@ -828,4 +821,13 @@ INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 
 SELECT * FROM Characters C JOIN Inventory I ON C.Character_ID=I.Character_ID JOIN Items It On It.Item_ID=I.Item_ID
 
-*/
+INSERT INTO EnemyDrops(Enemy_ID, Item_ID, Drop_chance) VALUES
+(4, 4, 0.9),
+(5, 4, 0.9),
+(6, 4, 0.9)
+
+SELECT * FROM dbo.CharacterInventory(1) Inv JOIN Items Ite ON Ite.Item_ID = Inv.Item_ID
+SELECT * FROM Characters
+
+INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
+(1, 4, 1, 1)

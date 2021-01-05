@@ -1,7 +1,7 @@
 import pyodbc
 import os
 import pandas as pd
-import numpy as np
+from random import uniform as rand
 
 with open('./server_name') as f:
     server = f.read()
@@ -97,10 +97,37 @@ def get_player_atk_def_hp(character_id):
     attack, defence = 0, 0
     for index, item in items.iterrows():
         if not pd.isnull(item['Attack']):
-            print(item['Attack'])
-            attack += item['Attack'] * item['Item_lvl'] if not pd.isnull(item['Item_lvl']) != np.nan else 1
-        # if item['Defence'] != np.nan:
-        #     print(item)
-        #     print(f"{int(item['Defence'])} --- {int(item['Item_lvl'])}")
-        #     defence += int(item['Defence']) * (int(item['Item_lvl']) if item['Item_lvl'] != np.nan else 1)
+            attack += item['Attack'] * item['Item_amount'] * (1 if pd.isnull(item['Item_lvl']) else item['Item_lvl'])
+        if not pd.isnull(item['Defence']):
+            defence += item['Defence'] * item['Item_amount'] * (1 if pd.isnull(item['Item_lvl']) else item['Item_lvl'])
     return attack, defence
+
+
+def damage_character(character_id, dmg):
+    conn.execute(f"""
+        UPDATE Characters SET Hp=Hp - {dmg} WHERE Character_ID={character_id}
+    """)
+    conn.commit()
+
+
+def give_award(character_id, monster_id, location):
+    # jeszcze exp
+    loots = pd.read_sql_query(f"""
+        SELECT * FROM EnemyDrops WHERE Enemy_ID={monster_id}
+    """, conn)
+    lvl = pd.read_sql_query(f"""
+        SELECT Location_lvl FROM Locations WHERE Location_ID={location}
+    """, conn).iat[0, 0]
+    for index, loot in loots.iterrows():
+        drop_coin = rand(0, 1)
+        if float(loot['Drop_chance']) > drop_coin:
+            conn.execute(f"""
+                INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
+                ({character_id}, {loot['Item_ID']}, {lvl}, 1)
+            """)
+            print('xxx')
+            conn.commit()
+
+
+def die(character_id):
+    pass

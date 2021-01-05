@@ -35,9 +35,9 @@ CREATE TABLE Locations(
 )
 
 CREATE TABLE LocationsConnetions(
-	Source_Location__ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
+	Source_Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
 	Destination_Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
-	PRIMARY KEY (Source_Location__ID, Destination_Location_ID)
+	PRIMARY KEY (Source_Location_ID, Destination_Location_ID)
 )
 
 -- Lista postaci
@@ -281,7 +281,7 @@ RETURN
 		FROM Characters
 		WHERE Character_ID=@Character_ID
 	) C
-	LEFT JOIN LocationsConnetions Lc ON C.Location_ID=Lc.Source_Location__ID
+	LEFT JOIN LocationsConnetions Lc ON C.Location_ID=Lc.Source_Location_ID
 	LEFT JOIN Locations L ON Lc.Destination_Location_ID=L.Location_ID
 GO
 
@@ -375,7 +375,7 @@ BEGIN
 		SELECT *
 		FROM LocationsConnetions Lc
 		JOIN Locations L ON Lc.Destination_Location_ID=L.Location_ID
-		WHERE Lc.Source_Location__ID = (
+		WHERE Lc.Source_Location_ID = (
 			SELECT Location_ID
 			FROM Characters
 			WHERE Character_ID=@Character_ID)
@@ -787,7 +787,7 @@ AS BEGIN
 		FROM DELETED)
 
 	DELETE FROM LocationsConnetions
-	WHERE Source_Location__ID=@Location_ID OR Destination_Location_ID=@Location_ID
+	WHERE Source_Location_ID=@Location_ID OR Destination_Location_ID=@Location_ID
 
 	DELETE FROM Locations
 	WHERE Location_ID=Location_ID

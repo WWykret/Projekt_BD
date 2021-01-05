@@ -110,8 +110,11 @@ def damage_character(character_id, dmg):
     conn.commit()
 
 
-def give_award(character_id, monster_id, location):
-    # jeszcze exp
+#nie pewne czy dziala
+def give_award(character_id, monster_id, location, exp):
+    conn.execute(f"""
+        EXEC Gain_Exp @Character_ID={character_id}, @Exp_gain={exp}
+    """)
     loots = pd.read_sql_query(f"""
         SELECT * FROM EnemyDrops WHERE Enemy_ID={monster_id}
     """, conn)
@@ -125,7 +128,6 @@ def give_award(character_id, monster_id, location):
                 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
                 ({character_id}, {loot['Item_ID']}, {lvl}, 1)
             """)
-            print('xxx')
             conn.commit()
 
 

@@ -52,7 +52,7 @@ if input('chcesz walczyć z potworem (t/n)? ') == 't':
     damage_character(char_id, 10)
     if int(character_stats.at[0, 'Hp']) > 0:
         print(f"Walka zakończona. Wygrywa {nick}.")
-        give_award(char_id, enemies.at[2, 'Enemy_ID'], location)
+        give_award(char_id, enemies.at[2, 'Enemy_ID'], location, enemies.at[2, 'Kill_exp'])
     else:
         print(f"Walka zakończona. Wygrywa {enemies.at[2, 'Name']}")
         die(char_id)

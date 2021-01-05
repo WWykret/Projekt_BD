@@ -22,6 +22,14 @@ print(f'Wybrano postać o nicku {nick}')
 
 wait()
 
+print('Otwarcie sklepu - store [id sklepu]')
+print('Zaatakowanie potwora - attack [id potwora]')
+print('Przejście do lokacji - move [id lokacji]')
+print('Sprawdzenie ekwipunku - show eq')
+print('id sklepu / potwora / lokacji znajduje się najbardziej po prawej stronie')
+
+wait()
+
 while True:
     location = get_location_id(char_id)
     # NPC

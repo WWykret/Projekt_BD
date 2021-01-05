@@ -53,6 +53,16 @@ def ban_player():
     conn.commit()
 
 
+def get_banned_players():
+    cls()
+    banned = pd.read_sql_query(f"""
+        SELECT * FROM CurrentlyBanned
+    """, conn)
+    for index, ban in banned.iterrows():
+        print(f"{index + 1}. ID: {ban['Player_ID']} --- DO: {ban['Finish']} --- Za: {ban['Reason']}")
+    wait()
+
+
 def get_characters(player_id):
     characters = pd.read_sql(f'''
         SELECT * FROM dbo.PlayerCharacters('{player_id}')
@@ -110,7 +120,7 @@ def damage_character(character_id, dmg):
     conn.commit()
 
 
-#nie pewne czy dziala
+# nie pewne czy dziala
 def give_award(character_id, monster_id, location, exp):
     conn.execute(f"""
         EXEC Gain_Exp @Character_ID={character_id}, @Exp_gain={exp}
@@ -128,8 +138,41 @@ def give_award(character_id, monster_id, location, exp):
                 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
                 ({character_id}, {loot['Item_ID']}, {lvl}, 1)
             """)
-            conn.commit()
+    conn.commit()
 
 
 def die(character_id):
-    pass
+    conn.execute(f"""
+        EXEC Death @Character_ID={character_id}
+    """)
+    conn.commit()
+
+
+def get_player_eq(character_id):
+    return pd.read_sql_query(f"""
+        SELECT * FROM dbo.CharacterInventory({character_id})
+    """, conn)
+
+
+def get_store(store_id):
+    return pd.read_sql_query(f"""
+        SELECT * FROM dbo.ItemsInStore({store_id})
+    """, conn)
+
+
+def get_location_id(character_id):
+    return int(pd.read_sql_query(f"""
+        SELECT Location_ID FROM Characters WHERE Character_ID={character_id}
+    """, conn).iat[0, 0])
+
+
+def get_near_locations(character_id):
+    return pd.read_sql_query(f"""
+        SELECT * FROM AccessibleLocations({character_id})
+    """, conn)
+
+
+def move_to_location(character_id, location_id):
+    conn.execute(f"""
+        EXEC AttemptToMove @Character_ID={character_id}, @Destination_ID={location_id}
+    """)

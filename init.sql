@@ -56,11 +56,11 @@ CREATE TABLE Characters(
 
 ALTER TABLE Guilds ADD CONSTRAINT fk_owner FOREIGN KEY(Guild_owner) REFERENCES Characters(Character_ID)
 
---Lista przedmiotów
+--Lista przedmiotÃ³w
 CREATE TABLE Items (
 	Item_ID INT PRIMARY KEY IDENTITY(1,1),
 	Name NVARCHAR(32) UNIQUE NOT NULL,
-	Atack INT,
+	Attack INT,
 	Defence INT,
 	Hp INT
 )
@@ -75,18 +75,18 @@ CREATE TABLE Inventory (
 )
 --to chyba jest w sumie nie potrzebne
 /*
---Lista wszystkich statusów
+--Lista wszystkich statusÃ³w
 CREATE TABLE Statuses (
 	Status_ID INT PRIMARY KEY IDENTITY(1,1),
 	Name NVARCHAR(32) UNIQUE NOT NULL,
-	Atack INT,
+	Attack INT,
 	Defence INT,
 	Hp INT,
 	Duration INT NOT NULL, --w turach
-	Chance FLOAT NOT NULL --procent na na³o¿enie
+	Chance FLOAT NOT NULL --procent na naÂ³oÂ¿enie
 )
 
---Lista Efektów
+--Lista EfektÃ³w
 CREATE TABLE Effects (
 	Character_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID),
 	Status_ID INT NOT NULL FOREIGN KEY REFERENCES Statuses(Status_ID),
@@ -110,17 +110,17 @@ CREATE TABLE NPCs (
 	Name NVARCHAR(32) UNIQUE NOT NULL
 )
 
---Lista Przeciwników
+--Lista PrzeciwnikÃ³w
 CREATE TABLE Enemies (
 	Enemy_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID),
 	Hp INT NOT NULL,
 	Defence INT NOT NULL,
-	Atack INT NOT NULL,
+	Attack INT NOT NULL,
 	Kill_exp INT NOT NULL,
 	--Status_on_hit INT REFERENCES Statuses(Status_ID)  --to jest potencjalny powut zeby zachowac statusy, mozna tego uzyc do wyzwalacza
 )
 
---Lista przedmiotów które wypadaj¹
+--Lista przedmiotÃ³w ktÃ³re wypadajÂ¹
 CREATE TABLE EnemyDrops (
 	Enemy_ID INT NOT NULL FOREIGN KEY REFERENCES Enemies(Enemy_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
@@ -131,10 +131,10 @@ CREATE TABLE EnemyDrops (
 --Lista Przyjaznych NPC
 CREATE TABLE Friends (
 	Friend_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID),
-	Store_ID INT UNIQUE, --ew. póŸniej dodaæ sequence
+	Store_ID INT UNIQUE, --ew. pÃ³Å¸niej dodaÃ¦ sequence
 )
 
---Lista sklepów
+--Lista sklepÃ³w
 CREATE TABLE Stores (
 	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
@@ -164,7 +164,7 @@ CREATE TABLE AuctionHouseBids (
 	PRIMARY KEY (Offer_ID,Bidder_ID,Bid_date)
 )
 
---Lista zadañ
+--Lista zadaÃ±
 CREATE TABLE Quests(
 	Quest_ID INT NOT NULL PRIMARY KEY IDENTITY(1,1),
 	Min_lvl INT NOT NULL,
@@ -178,7 +178,7 @@ CREATE TABLE Quests(
 	Item_amount INT
 )
 
---Lista nagród
+--Lista nagrÃ³d
 CREATE TABLE Rewards(
 	Quest_ID INT NOT NULL REFERENCES Quests(Quest_ID) ,
 	Item_ID INT NOT NULL REFERENCES Items(Item_ID) ,
@@ -186,24 +186,6 @@ CREATE TABLE Rewards(
 	Amount INT NOT NULL
 	PRIMARY KEY(Quest_ID, Item_ID, Item_lvl)
 )
-/*
---WSTAWIANIE PIERWSZYCH PRZYK£ADOWYCH DANYCH DO TABEL
-INSERT INTO Players VALUES
-(N'password 123', 'email@wp.pl'),
-(N'password 321', 'email@wp.pl'),
-(N'password xxx', 'email@wp.pl'),
-(N'password 832', 'email@wp.pl'),
-(N'password 666', 'email@wp.pl')
-
-INSERT INTO Locations VALUES
-(N'Pi¿mowy jar', 1),
-(N'Jarowy pi¿m', 2),
-(N'Mordor', 3),
-(N'FAIS', 4),
-(N'Gwiazda neutronowa', 5)
-
--- INSERT INTO Characters VALUES
-*/
 
 ------procedury i funkcje i reszta gowna
 
@@ -225,9 +207,9 @@ RETURNS INT
 AS BEGIN
 	DECLARE @Res INT
 	IF (EXISTS(SELECT * FROM Players P WHERE Email=@Email AND Pass=@Password) AND NOT EXISTS(SELECT * FROM Players P JOIN Banned B ON P.Player_ID = B.Player_ID WHERE GETDATE() BETWEEN B.Start AND B.Finish AND P.Email=@Email))
-		SET @Res = 1
+		SET @Res = (SELECT Player_ID FROM Players WHERE Email=@Email)
 	ELSE
-		SET @Res = 0
+		SET @Res = -1
 	RETURN @Res
 END
 GO
@@ -239,7 +221,7 @@ CREATE FUNCTION CharacterInventory (
 RETURNS TABLE
 AS
 RETURN
-    SELECT It.Name, Inv.Item_lvl, Inv.Item_amount 
+    SELECT It.Name, It.Item_ID, Inv.Item_lvl, Inv.Item_amount 
     FROM Inventory Inv
 	LEFT JOIN Items It ON Inv.Item_ID=It.Item_ID
 	WHERE Inv.Character_ID=@Character_ID
@@ -252,14 +234,14 @@ CREATE FUNCTION PlayerCharacters (
 RETURNS TABLE
 AS
 RETURN
-    SELECT C.Nick, G.Name GuildName, L.Name CurrentLocation, C.Lvl, C.Gold
+    SELECT C.Character_ID, Nick, G.Name GuildName, L.Location_ID CurrentLocation, C.Lvl, C.Gold
     FROM Characters C
 	LEFT JOIN Guilds G ON C.Guild_ID=G.Guild_ID
 	LEFT JOIN Locations L ON C.Location_ID=L.Location_ID
 	WHERE C.Player_ID=@Player_ID
 GO
 
---funkcja wypisuj¹ca postacie nalezace do danej guildi
+--funkcja wypisujÂ¹ca postacie nalezace do danej guildi
 CREATE FUNCTION CharactersInGuild (
     @Guild_ID INT
 )
@@ -272,7 +254,7 @@ RETURN
 GO
 
 
---funkcja wypisuj¹ca wszystkich przeciwnikow w danej lokacji
+--funkcja wypisujÂ¹ca wszystkich przeciwnikow w danej lokacji
 CREATE FUNCTION EnemiesInLocation (
     @Location_ID INT
 )
@@ -286,7 +268,7 @@ RETURN
 GO
 
 
---funkcja wypisuj¹ca wszystkich przyjaznych NPC w danej lokacji
+--funkcja wypisujÂ¹ca wszystkich przyjaznych NPC w danej lokacji
 CREATE FUNCTION FriendsInLocation (
     @Location_ID INT
 )
@@ -299,7 +281,7 @@ RETURN
 	WHERE N.Location_ID=@Location_ID
 GO
 
---funkcja wypisuj¹ca wszystkich lokacje do ktorych moze przejsc postac
+--funkcja wypisujÂ¹ca wszystkich lokacje do ktorych moze przejsc postac
 CREATE FUNCTION AccessibleLocations (
     @Character_ID INT
 )
@@ -316,7 +298,7 @@ RETURN
 	LEFT JOIN Locations L ON Lc.Destination_Location_ID=L.Location_ID
 GO
 
---funkcja wypisuj¹ca wszystkie questy dawane przez danego przyjaznego NPC
+--funkcja wypisujÂ¹ca wszystkie questy dawane przez danego przyjaznego NPC
 CREATE FUNCTION NPCsQuests (
     @Friend_ID INT
 )
@@ -329,7 +311,7 @@ RETURN
 
 GO
 
---funkcja wypisuj¹ca wszystkie questy dawane przez danego przyjaznego NPC
+--funkcja wypisujÂ¹ca wszystkie questy dawane przez danego przyjaznego NPC
 CREATE FUNCTION AccessibleQuests (
     @Friend_ID INT
 )
@@ -342,7 +324,7 @@ RETURN
 
 GO
 
---funkcja wypisuj¹ca wszystkie przedmioty w danym sklepie
+--funkcja wypisujÂ¹ca wszystkie przedmioty w danym sklepie
 CREATE FUNCTION ItemsInStore (
     @Store_ID INT
 )
@@ -356,7 +338,7 @@ RETURN
 
 GO
 
---funkcja wypisuj¹ca wszystkie nagrody przyznane za dany quest
+--funkcja wypisujÂ¹ca wszystkie nagrody przyznane za dany quest
 CREATE FUNCTION RwardsForQuest (
     @Quest_ID INT
 )
@@ -686,6 +668,7 @@ AS BEGIN
 END
 GO
 
+
 CREATE TRIGGER CreteGuild ON Guilds
 AFTER INSERT
 AS BEGIN
@@ -718,3 +701,60 @@ AS BEGIN
 	END 
 END
 */
+
+*/
+--WSTAWIANIE PIERWSZYCH PRZYKÂ£ADOWYCH DANYCH DO TABEL
+INSERT INTO Players VALUES
+(N'password 123', 'email1@wp.pl'),
+(N'password 321', 'email2@wp.pl'),
+(N'password xxx', 'email3@wp.pl'),
+(N'password 832', 'email4@wp.pl'),
+(N'password 666', 'email5@wp.pl')
+
+INSERT INTO Locations VALUES
+(N'PiÂ¿mowy jar', 1),
+(N'Jarowy piÂ¿m', 2),
+(N'Mordor', 3),
+(N'FAIS', 4),
+(N'Gwiazda neutronowa', 5)
+
+INSERT INTO Characters(Player_ID, Nick, Location_ID) VALUES
+(1, 'Dunk_man1', 1),
+(1, 'Dunk_man2', 1),
+(1, 'Dunk_man3', 1),
+(1, 'Dunk_man4', 1)
+
+INSERT INTO NPCs VALUES
+(1, 'Gerarda'),
+(1, 'GewisÂ³aw'),
+(1, 'Genowefa'),
+(1, 'RafaÂ³ Kawa'),
+(1, 'Kolos z ASD'),
+(1, 'Prokekt z BD')
+
+INSERT INTO Friends VALUES
+(1, 1),
+(2, NULL),
+(3, 2)
+
+INSERT INTO Enemies VALUES
+(4, 10, 10, 10, 10),
+(5, 20, 5, 10, 10),
+(6, 5, 20, 5, 10)
+
+INSERT INTO Items Values
+('MÂ³ot Kawy', 10, NULL, NULL),
+('pierÅ“cieÃ± ASD', NULL, 10, NULL),
+('Zwolnienie z egz', NULL, NULL, 20)
+
+INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
+(1, 1, 1, 3)
+
+INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
+(1, 2, 2, 2)
+
+INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
+(1, 3, 3, 1)
+
+SELECT * FROM Characters C JOIN Inventory I ON C.Character_ID=I.Character_ID JOIN Items It On It.Item_ID=I.Item_ID
+

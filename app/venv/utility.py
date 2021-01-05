@@ -18,13 +18,12 @@ def cls():
 
 
 # FUNKCJE
-def login(email, password) -> int:
-    cls()
-    player_id = int(pd.read_sql_query(f'''
+def login(email, password):
+    player_id = pd.read_sql_query(f'''
         SELECT dbo.TryToLogin(N'{email}', N'{password}')
-    ''', conn))
+    ''', conn)
     conn.commit()
-    return player_id
+    return int(player_id.iat[0,0])
 
 
 def register():
@@ -49,7 +48,10 @@ def ban_player():
 
 
 def get_characters(player_id):
-    pass
+    characters = pd.read_sql(f'''
+        SELECT * FROM dbo.PlayerCharacters('{player_id}')
+    ''', conn)
+    return characters
 
 
 def get_location(character_id):

@@ -199,7 +199,11 @@ INSERT INTO Locations VALUES
 (N'FAIS', 4),
 (N'Gwiazda neutronowa', 5)
 
--- INSERT INTO Characters VALUES
+INSERT INTO Characters(Player_ID, Nick, Location_ID) VALUES
+(1, 'Dunk_man1', 1),
+(1, 'Dunk_man2', 1),
+(1, 'Dunk_man3', 1),
+(1, 'Dunk_man4', 1)
 
 ------procedury i funkcje i reszta gowna
 
@@ -221,9 +225,9 @@ RETURNS INT
 AS BEGIN
 	DECLARE @Res INT
 	IF (EXISTS(SELECT * FROM Players P WHERE Email=@Email AND Pass=@Password) AND NOT EXISTS(SELECT * FROM Players P JOIN Banned B ON P.Player_ID = B.Player_ID WHERE GETDATE() BETWEEN B.Start AND B.Finish AND P.Email=@Email))
-		SET @Res = 1
+		SET @Res = (SELECT Player_ID FROM Players WHERE Email=@Email)
 	ELSE
-		SET @Res = 0
+		SET @Res = -1
 	RETURN @Res
 END
 GO
@@ -248,7 +252,7 @@ CREATE FUNCTION PlayerCharacters (
 RETURNS TABLE
 AS
 RETURN
-    SELECT C.Nick, G.Name GuildName, L.Name CurrentLocation, C.Lvl, C.Gold
+    SELECT C.Character_ID, Nick, G.Name GuildName, L.Location_ID CurrentLocation, C.Lvl, C.Gold
     FROM Characters C
 	LEFT JOIN Guilds G ON C.Guild_ID=G.Guild_ID
 	LEFT JOIN Locations L ON C.Location_ID=L.Location_ID
@@ -534,3 +538,7 @@ AS BEGIN
 END
 GO
 */
+
+SELECT * FROM Players
+SELECT * FROM dbo.PlayerCharacters(1)
+SELECT * FROM Banned

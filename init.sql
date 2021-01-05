@@ -559,7 +559,8 @@ INSERT INTO Enemies VALUES
 INSERT INTO Items Values
 ('M³ot Kawy', 10, NULL, NULL),
 ('pierœcieñ ASD', NULL, 10, NULL),
-('Zwolnienie z egz', NULL, NULL, 20)
+('Zwolnienie z egz', NULL, NULL, 20),
+('Strza³a w kolanie', NULL, NULL, NULL)
 
 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (1, 1, 1, 3)
@@ -570,4 +571,13 @@ INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (1, 3, 3, 1)
 
-SELECT * FROM Characters C JOIN Inventory I ON C.Character_ID=I.Character_ID JOIN Items It On It.Item_ID=I.Item_ID
+INSERT INTO EnemyDrops(Enemy_ID, Item_ID, Drop_chance) VALUES
+(4, 4, 0.9),
+(5, 4, 0.9),
+(6, 4, 0.9)
+
+SELECT * FROM dbo.CharacterInventory(1) Inv JOIN Items Ite ON Ite.Item_ID = Inv.Item_ID
+SELECT * FROM Characters
+
+INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
+(1, 4, 1, 1)

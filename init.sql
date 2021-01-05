@@ -86,7 +86,7 @@ CREATE TABLE Banned (
 --Lista wszystkich NPC
 CREATE TABLE NPCs (
 	NPC_ID INT PRIMARY KEY IDENTITY(1,1),
-	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
+	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID) ON DELETE CASCADE,
 	Name NVARCHAR(32) UNIQUE NOT NULL
 )
 
@@ -787,7 +787,7 @@ AS BEGIN
 		FROM DELETED)
 
 	DELETE FROM LocationsConnetions
-	WHERE Source_Location__ID=@Location_ID OR Destination_Location_ID=@Location_ID
+	WHERE Source_Location_ID=@Location_ID OR Destination_Location_ID=@Location_ID
 
 	DELETE FROM Locations
 	WHERE Location_ID=Location_ID

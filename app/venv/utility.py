@@ -12,20 +12,20 @@ conn = pyodbc.connect(
     'Trusted_Connection=yes;'
 )
 
+
 def cls():
     os.system('cls')
 
 
-#FUNKCJE
-def login() -> int:
+# FUNKCJE
+def login(email, password) -> int:
     cls()
-    email = input('Email: ')
-    password = input('Hasło: ')
     player_id = int(pd.read_sql_query(f'''
         SELECT dbo.TryToLogin(N'{email}', N'{password}')
     ''', conn))
     conn.commit()
     return player_id
+
 
 def register():
     cls()
@@ -47,5 +47,18 @@ def ban_player():
     ''')
     conn.commit()
 
-def get_characters():
+
+def get_characters(player_id):
+    pass
+
+
+def get_location(character_id):
+    pass
+
+
+def get_friends(location_id):
+    pass
+
+
+def get_enemies(location_id):
     pass

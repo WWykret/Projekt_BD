@@ -2,7 +2,7 @@ USE master
 
 -- Tworzenie pustej bazy danych
 IF DB_ID('Project') IS NOT NULL
-	DROP DATABASE Project
+    DROP DATABASE Project
 
 CREATE DATABASE Project
 
@@ -20,8 +20,11 @@ CREATE TABLE Guilds(
 	Guild_ID INT PRIMARY KEY IDENTITY(1,1),
 	Guild_owner INT NOT NULL,
 	Name NVARCHAR(32) UNIQUE NOT NULL,
+	Members INT NOT NULL DEFAULT 1,
+	/*
 	Guild_lvl INT NOT NULL,
 	Guild_exp INT NOT NULL
+	*/
 )
 
 --Lista lokacji
@@ -53,7 +56,7 @@ CREATE TABLE Characters(
 
 ALTER TABLE Guilds ADD CONSTRAINT fk_owner FOREIGN KEY(Guild_owner) REFERENCES Characters(Character_ID)
 
---Lista przedmiotów
+--Lista przedmiotÃ³w
 CREATE TABLE Items (
 	Item_ID INT PRIMARY KEY IDENTITY(1,1),
 	Name NVARCHAR(32) UNIQUE NOT NULL,
@@ -72,7 +75,7 @@ CREATE TABLE Inventory (
 )
 --to chyba jest w sumie nie potrzebne
 /*
---Lista wszystkich statusów
+--Lista wszystkich statusÃ³w
 CREATE TABLE Statuses (
 	Status_ID INT PRIMARY KEY IDENTITY(1,1),
 	Name NVARCHAR(32) UNIQUE NOT NULL,
@@ -80,10 +83,10 @@ CREATE TABLE Statuses (
 	Defence INT,
 	Hp INT,
 	Duration INT NOT NULL, --w turach
-	Chance FLOAT NOT NULL --procent na na³o¿enie
+	Chance FLOAT NOT NULL --procent na naÂ³oÂ¿enie
 )
 
---Lista Efektów
+--Lista EfektÃ³w
 CREATE TABLE Effects (
 	Character_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID),
 	Status_ID INT NOT NULL FOREIGN KEY REFERENCES Statuses(Status_ID),
@@ -107,7 +110,7 @@ CREATE TABLE NPCs (
 	Name NVARCHAR(32) UNIQUE NOT NULL
 )
 
---Lista Przeciwników
+--Lista PrzeciwnikÃ³w
 CREATE TABLE Enemies (
 	Enemy_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID),
 	Hp INT NOT NULL,
@@ -117,7 +120,7 @@ CREATE TABLE Enemies (
 	--Status_on_hit INT REFERENCES Statuses(Status_ID)  --to jest potencjalny powut zeby zachowac statusy, mozna tego uzyc do wyzwalacza
 )
 
---Lista przedmiotów które wypadaj¹
+--Lista przedmiotÃ³w ktÃ³re wypadajÂ¹
 CREATE TABLE EnemyDrops (
 	Enemy_ID INT NOT NULL FOREIGN KEY REFERENCES Enemies(Enemy_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
@@ -128,15 +131,15 @@ CREATE TABLE EnemyDrops (
 --Lista Przyjaznych NPC
 CREATE TABLE Friends (
 	Friend_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID),
-	Store_ID INT UNIQUE, --ew. póŸniej dodaæ sequence
+	Store_ID INT UNIQUE, --ew. pÃ³Å¸niej dodaÃ¦ sequence
 )
 
---Lista sklepów
+--Lista sklepÃ³w
 CREATE TABLE Stores (
 	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
 	Item_lvl INT NOT NULL,
-	--Amount INT NOT NULL, --to lepiej pominac, przyjac ze liczba jest inf
+	Amount INT NOT NULL,
 	Unit_cost INT NOT NULL
 	PRIMARY KEY (Store_ID, Item_ID, Item_lvl)
 )
@@ -161,7 +164,7 @@ CREATE TABLE AuctionHouseBids (
 	PRIMARY KEY (Offer_ID,Bidder_ID,Bid_date)
 )
 
---Lista zadañ
+--Lista zadaÃ±
 CREATE TABLE Quests(
 	Quest_ID INT NOT NULL PRIMARY KEY IDENTITY(1,1),
 	Min_lvl INT NOT NULL,
@@ -175,7 +178,7 @@ CREATE TABLE Quests(
 	Item_amount INT
 )
 
---Lista nagród
+--Lista nagrÃ³d
 CREATE TABLE Rewards(
 	Quest_ID INT NOT NULL REFERENCES Quests(Quest_ID) ,
 	Item_ID INT NOT NULL REFERENCES Items(Item_ID) ,
@@ -238,7 +241,7 @@ RETURN
 	WHERE C.Player_ID=@Player_ID
 GO
 
---funkcja wypisuj¹ca postacie nalezace do danej guildi
+--funkcja wypisujÂ¹ca postacie nalezace do danej guildi
 CREATE FUNCTION CharactersInGuild (
     @Guild_ID INT
 )
@@ -251,7 +254,7 @@ RETURN
 GO
 
 
---funkcja wypisuj¹ca wszystkich przeciwnikow w danej lokacji
+--funkcja wypisujÂ¹ca wszystkich przeciwnikow w danej lokacji
 CREATE FUNCTION EnemiesInLocation (
     @Location_ID INT
 )
@@ -265,7 +268,7 @@ RETURN
 GO
 
 
---funkcja wypisuj¹ca wszystkich przyjaznych NPC w danej lokacji
+--funkcja wypisujÂ¹ca wszystkich przyjaznych NPC w danej lokacji
 CREATE FUNCTION FriendsInLocation (
     @Location_ID INT
 )
@@ -278,7 +281,7 @@ RETURN
 	WHERE N.Location_ID=@Location_ID
 GO
 
---funkcja wypisuj¹ca wszystkich lokacje do ktorych moze przejsc postac
+--funkcja wypisujÂ¹ca wszystkich lokacje do ktorych moze przejsc postac
 CREATE FUNCTION AccessibleLocations (
     @Character_ID INT
 )
@@ -295,7 +298,7 @@ RETURN
 	LEFT JOIN Locations L ON Lc.Destination_Location_ID=L.Location_ID
 GO
 
---funkcja wypisuj¹ca wszystkie questy dawane przez danego przyjaznego NPC
+--funkcja wypisujÂ¹ca wszystkie questy dawane przez danego przyjaznego NPC
 CREATE FUNCTION NPCsQuests (
     @Friend_ID INT
 )
@@ -308,7 +311,7 @@ RETURN
 
 GO
 
---funkcja wypisuj¹ca wszystkie questy dawane przez danego przyjaznego NPC
+--funkcja wypisujÂ¹ca wszystkie questy dawane przez danego przyjaznego NPC
 CREATE FUNCTION AccessibleQuests (
     @Friend_ID INT
 )
@@ -321,7 +324,7 @@ RETURN
 
 GO
 
---funkcja wypisuj¹ca wszystkie przedmioty w danym sklepie
+--funkcja wypisujÂ¹ca wszystkie przedmioty w danym sklepie
 CREATE FUNCTION ItemsInStore (
     @Store_ID INT
 )
@@ -335,7 +338,7 @@ RETURN
 
 GO
 
---funkcja wypisuj¹ca wszystkie nagrody przyznane za dany quest
+--funkcja wypisujÂ¹ca wszystkie nagrody przyznane za dany quest
 CREATE FUNCTION RwardsForQuest (
     @Quest_ID INT
 )
@@ -444,9 +447,66 @@ BEGIN
 	RETURN @Res
 END
 GO
+
+CREATE PROCEDURE RemoveMember(@Player_ID INT, @Guild_ID INT)
+AS
+BEGIN
+	IF(EXISTS(
+		SELECT *
+		FROM Guilds
+		WHERE Guild_ID=@Guild_ID AND Guild_owner=@Player_ID
+		))
+	BEGIN
+		DELETE FROM Guilds
+		WHERE Guild_ID=@Guild_ID;
+	END
+	ELSE 
+	BEGIN
+		UPDATE Guilds
+		SET Members-=1
+		WHERE Guild_ID=@Guild_ID;
+
+		UPDATE Members
+		SET @Guild_ID=NULL
+		WHERE Guild_ID=@Guild_ID;
+	END
+END
+GO
+
+CREATE PROCEDURE AddMember(@Player_ID INT, @Guild_ID INT)
+AS
+BEGIN
+	IF(EXISTS(
+		SELECT *
+		FROM Characters
+		WHERE Player_ID=@Player_ID AND Guild_ID IS NOT NULL
+		))
+	BEGIN
+	DECLARE @CharactersGuild INT
+	SET @CharactersGuild=(
+		SELECT Guild_ID
+		FROM Characters
+		WHERE Player_ID=@Player_ID)
+
+		EXEC RemoveMember @Player_ID=@Player_ID , @Guild_ID=@CharactersGuild
+	END
+	ELSE 
+	BEGIN
+		UPDATE Guilds
+		SET Members+=1
+		WHERE Guild_ID=@Guild_ID;
+
+		UPDATE Members
+		SET @Guild_ID=@Guild_ID
+		WHERE Player_ID=@Player_ID;
+	END
+
+END
+GO
+
 --wyzwalacze
 
-CREATE TRIGGER addItem ON Inventory
+CREATE TRIGGER addItem ON Inventory--dodaje tylko jeden wierszu
 INSTEAD OF INSERT
 AS BEGIN
 
@@ -466,21 +526,92 @@ AS BEGIN
 	BEGIN
 
 		UPDATE Inventory
-		SET Item_amount+=Item_amount+(SELECT Item_amount FROM INSERTED )
+		SET Item_amount+=(SELECT Item_amount FROM INSERTED )
 		WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
 
 	END 
 	ELSE
 	BEGIN
+		
+		SELECT *
+		INTO Inventory
+		FROM INSERTED
 
-		INSERT INTO Inventory
-		VALUES (@Character_ID, @Item_ID, @Item_lvl,@Item_amount)
+		--INSERT INTO Inventory
+		--VALUES (@Character_ID, @Item_ID, @Item_lvl,@Item_amount)
 
 	END
-	
+
+	IF(EXISTS(
+		SELECT HP
+		FROM Items
+		WHERE @Item_ID=Item_ID AND HP IS NOT NULL
+	))
+	BEGIN
+	UPDATE Characters
+	SET Max_hp+=@Item_lvl*@Item_amount*(
+		SELECT HP
+		FROM Items
+		WHERE @Item_ID=Item_ID AND HP IS NOT NULL
+	)
+	WHERE Character_ID=@Character_ID
+
+	END
 
 END
 GO
+
+CREATE TRIGGER deleteItem ON Inventory--dodaje tylko jeden wierszu
+INSTEAD OF DELETE
+AS BEGIN
+
+	DECLARE @Character_ID INT;
+    DECLARE @Item_ID INT;
+    DECLARE @Item_lvl INT;
+	DECLARE @Item_amount INT;
+	
+    SELECT @Character_ID = Character_ID, @Item_ID = Item_lvl, @Item_lvl = Item_lvl, @Item_amount=Item_amount 
+	FROM DELETED;
+
+    IF(@Item_amount<(
+		SELECT Item_amount
+		FROM Inventory I
+		WHERE I.Character_ID=@Character_ID AND I.Item_ID=@Item_ID AND I.Item_lvl=@Item_lvl
+	))
+	BEGIN
+
+		UPDATE Inventory
+		SET Item_amount-=(SELECT Item_amount FROM INSERTED )
+		WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
+
+	END 
+	ELSE
+	BEGIN
+		
+		DELETE FROM Inventory
+		WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
+
+	END
+
+	IF(EXISTS(
+		SELECT HP
+		FROM Items
+		WHERE @Item_ID=Item_ID AND HP IS NOT NULL
+	))
+	BEGIN
+	UPDATE Characters
+	SET Max_hp-=@Item_lvl*@Item_amount*(
+		SELECT HP
+		FROM Items
+		WHERE @Item_ID=Item_ID AND HP IS NOT NULL
+	)
+	WHERE Character_ID=@Character_ID
+
+	END
+
+END
+GO
+
 /*
 CREATE TRIGGER AutoLevelUp ON Characters
 INSTEAD  OF UPDATE
@@ -515,9 +646,64 @@ AS BEGIN
 
 	END 
 END
-GO
 */
---WSTAWIANIE PIERWSZYCH PRZYK£ADOWYCH DANYCH DO TABEL
+
+GO
+
+CREATE TRIGGER DeleteGuild ON Guilds
+INSTEAD OF DELETE 
+AS BEGIN
+
+	DECLARE @Giuld_ID INT;
+	SET @Giuld_ID =(
+		SELECT Guild_ID
+		FROM DELETED
+	)
+	UPDATE Characters
+	SET Guild_ID=NULL
+	WHERE Guild_ID=@Giuld_ID
+
+	DELETE FROM Guilds
+	WHERE Guild_ID=@Giuld_ID
+END
+GO
+
+
+CREATE TRIGGER CreteGuild ON Guilds
+AFTER INSERT
+AS BEGIN
+
+	DECLARE @Character_ID INT;
+	DECLARE @Giuld_ID INT;
+
+	SET @Character_ID =(
+		SELECT Guild_owner
+		FROM INSERTED
+	)
+	
+	
+	SET @Giuld_ID =(
+		SELECT Guild_ID
+		FROM INSERTED
+	)
+
+	UPDATE Characters
+	SET Guild_ID=@Giuld_ID
+	WHERE Character_ID=@Character_ID
+
+END
+GO
+/*
+CREATE TRIGGER AutoLevelUp ON Characters
+AFTER DELETE
+AS BEGIN
+
+	END 
+END
+*/
+
+*/
+--WSTAWIANIE PIERWSZYCH PRZYKÂ£ADOWYCH DANYCH DO TABEL
 INSERT INTO Players VALUES
 (N'password 123', 'email1@wp.pl'),
 (N'password 321', 'email2@wp.pl'),
@@ -526,8 +712,8 @@ INSERT INTO Players VALUES
 (N'password 666', 'email5@wp.pl')
 
 INSERT INTO Locations VALUES
-(N'Pi¿mowy jar', 1),
-(N'Jarowy pi¿m', 2),
+(N'PiÂ¿mowy jar', 1),
+(N'Jarowy piÂ¿m', 2),
 (N'Mordor', 3),
 (N'FAIS', 4),
 (N'Gwiazda neutronowa', 5)
@@ -540,9 +726,9 @@ INSERT INTO Characters(Player_ID, Nick, Location_ID) VALUES
 
 INSERT INTO NPCs VALUES
 (1, 'Gerarda'),
-(1, 'Gewis³aw'),
+(1, 'GewisÂ³aw'),
 (1, 'Genowefa'),
-(1, 'Rafa³ Kawa'),
+(1, 'RafaÂ³ Kawa'),
 (1, 'Kolos z ASD'),
 (1, 'Prokekt z BD')
 
@@ -557,8 +743,8 @@ INSERT INTO Enemies VALUES
 (6, 5, 20, 5, 10)
 
 INSERT INTO Items Values
-('M³ot Kawy', 10, NULL, NULL),
-('pierœcieñ ASD', NULL, 10, NULL),
+('MÂ³ot Kawy', 10, NULL, NULL),
+('pierÅ“cieÃ± ASD', NULL, 10, NULL),
 ('Zwolnienie z egz', NULL, NULL, 20)
 
 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
@@ -571,3 +757,4 @@ INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (1, 3, 3, 1)
 
 SELECT * FROM Characters C JOIN Inventory I ON C.Character_ID=I.Character_ID JOIN Items It On It.Item_ID=I.Item_ID
+

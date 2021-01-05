@@ -1,7 +1,3 @@
-import pandas as pd
-from utility import get_characters
-
-
 def character_menu(player_id):
     # wypisz postacie
 

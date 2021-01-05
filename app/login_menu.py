@@ -1,4 +1,3 @@
-import pandas as pd
 from utility import login, register
 
 

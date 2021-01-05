@@ -1,5 +1,4 @@
 from utility import *
-import pandas as pd
 
 # menu
 while True:

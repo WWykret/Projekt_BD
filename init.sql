@@ -35,9 +35,9 @@ CREATE TABLE Locations(
 )
 
 CREATE TABLE LocationsConnetions(
-	Source_Location__ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
+	Source_Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
 	Destination_Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
-	PRIMARY KEY (Source_Location__ID, Destination_Location_ID)
+	PRIMARY KEY (Source_Location_ID, Destination_Location_ID)
 )
 
 -- Lista postaci
@@ -194,7 +194,7 @@ CREATE TABLE Rewards(
 GO
 --Widok pokazujacy aktualnie zbanowanych graczy
 CREATE VIEW CurrentlyBanned AS
-	SELECT B.Player_ID
+	SELECT B.Player_ID, B.Finish, B.Reason
 	FROM Banned B
 	WHERE GETDATE() BETWEEN B.Start AND B.Finish
 GO
@@ -261,7 +261,7 @@ CREATE FUNCTION EnemiesInLocation (
 RETURNS TABLE
 AS
 RETURN
-    SELECT E.Enemy_ID, N.Name
+    SELECT E.Enemy_ID, N.Name, E.Kill_exp
     FROM Enemies E 
 	LEFT JOIN NPCs N ON E.Enemy_ID=N.NPC_ID
 	WHERE N.Location_ID=@Location_ID
@@ -294,7 +294,7 @@ RETURN
 		FROM Characters
 		WHERE Character_ID=@Character_ID
 	) C
-	LEFT JOIN LocationsConnetions Lc ON C.Location_ID=Lc.Source_Location__ID
+	LEFT JOIN LocationsConnetions Lc ON C.Location_ID=Lc.Source_Location_ID
 	LEFT JOIN Locations L ON Lc.Destination_Location_ID=L.Location_ID
 GO
 
@@ -331,7 +331,7 @@ CREATE FUNCTION ItemsInStore (
 RETURNS TABLE
 AS
 RETURN
-    SELECT S.Item_ID, I.Name, S.Item_lvl, S.Unit_cost
+    SELECT S.Item_ID, I.Name, S.Item_lvl, S.Unit_cost, S.Amount
     FROM Stores S
 	LEFT JOIN Items I ON S.Item_ID=I.Item_ID
 	WHERE S.Store_ID=@Store_ID
@@ -388,7 +388,7 @@ BEGIN
 		SELECT *
 		FROM LocationsConnetions Lc
 		JOIN Locations L ON Lc.Destination_Location_ID=L.Location_ID
-		WHERE Lc.Source_Location__ID = (
+		WHERE Lc.Source_Location_ID = (
 			SELECT Location_ID
 			FROM Characters
 			WHERE Character_ID=@Character_ID)
@@ -776,16 +776,28 @@ END
 GO
 
 INSERT INTO Players VALUES
-('password 123', 'email1@wp.pl')
+('password 123', 'email1@wp.pl'),
+('password 123', 'email2@wp.pl')
 
 INSERT INTO Locations VALUES
-('pi¿mowy jar', 1)
+('pi¿mowy jar', 1),
+('pi¿mowy gaj', 2),
+('Sala wyk³adowa', 3)
 
-INSERT INTO Characters(Player_ID, Nick, Location_ID) VALUES
-(1, 'Dunk_man1', 1),
-(1, 'Dunk_man2', 1),
-(1, 'Dunk_man3', 1),
-(1, 'Dunk_man4', 1)
+
+INSERT INTO LocationsConnetions VALUES
+(1, 2),
+(2, 1),
+(1, 3),
+(3, 1)
+
+
+INSERT INTO Characters(Player_ID, Nick, Location_ID, Lvl) VALUES
+(1, 'Dunk_man1', 1, 2),
+(1, 'Dunk_man2', 1, 1),
+(1, 'Dunk_man3', 1, 1),
+(1, 'Dunk_man4', 1, 1),
+(2, 'kawa_22', 1, 1)
 
 INSERT INTO NPCs VALUES
 (1, 'Gerarda'),
@@ -833,4 +845,11 @@ INSERT INTO EnemyDrops(Enemy_ID, Item_ID, Drop_chance) VALUES
 SELECT * FROM dbo.CharacterInventory(1) Inv JOIN Items Ite ON Ite.Item_ID = Inv.Item_ID
 SELECT * FROM Characters
 
+INSERT INTO Stores(Store_ID, Item_ID, Item_lvl, Amount, Unit_cost) VALUES
+(1, 1, 5, 10, 100),
+(1, 2, 8, 10, 200),
+(1, 3, 10, 10, 300),
+(2, 2, 99, 5, 1000)
 
+SELECT * FROM Characters
+SELECT * FROM CurrentlyBanned

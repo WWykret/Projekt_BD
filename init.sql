@@ -582,10 +582,10 @@ AS BEGIN
     DECLARE @Item_ID INT;
     DECLARE @Item_lvl INT;
 	DECLARE @Item_amount INT;
-
 	DECLARE @Item_Hp INT;
-	
-    SELECT @Character_ID = Character_ID, @Item_ID = Item_lvl, @Item_lvl = Item_lvl, @Item_amount=Item_amount , @Item_Hp=Hp 
+
+
+    SELECT @Character_ID = Character_ID, @Item_ID = I.Item_ID, @Item_lvl = Item_lvl, @Item_amount=Item_amount , @Item_Hp=Hp 
 	FROM INSERTED I
 	JOIN Items It ON It.Item_ID=I.Item_ID;
 
@@ -595,7 +595,6 @@ AS BEGIN
 		WHERE I.Character_ID=@Character_ID AND I.Item_ID=@Item_ID AND I.Item_lvl=@Item_lvl
 	))
 	BEGIN
-
 		UPDATE Inventory
 		SET Item_amount+=(SELECT Item_amount FROM INSERTED )
 		WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
@@ -603,14 +602,14 @@ AS BEGIN
 	END 
 	ELSE
 	BEGIN
-		
+		/*
 		SELECT *
 		INTO Inventory
 		FROM INSERTED
+		*/
 
-		--INSERT INTO Inventory
-		--VALUES (@Character_ID, @Item_ID, @Item_lvl,@Item_amount)
-
+		INSERT INTO Inventory
+		VALUES (@Character_ID, @Item_ID, @Item_lvl,@Item_amount)
 	END
 
 	IF(@Item_Hp IS NOT NULL)
@@ -635,9 +634,11 @@ AS BEGIN
 
 	DECLARE @Item_Hp INT;
 	
-    SELECT @Character_ID = Character_ID, @Item_ID = Item_lvl, @Item_lvl = Item_lvl, @Item_amount=Item_amount , @Item_Hp=Hp 
+    SELECT @Character_ID = Character_ID, @Item_ID = D.Item_ID , @Item_lvl = Item_lvl, @Item_amount=Item_amount , @Item_Hp=Hp 
 	FROM DELETED D
 	JOIN Items I ON D.Item_ID=I.Item_ID;
+
+	
 
     IF(@Item_amount<(
 		SELECT Item_amount
@@ -805,10 +806,10 @@ INSERT INTO Enemies VALUES
 (6, 5, 20, 5, 10)
 
 INSERT INTO Items VALUES
-('M³ot Kawy', 10, NULL, NULL),
-('pierœcieñ ASD', NULL, 10, NULL),
+('Mlot Kawy', 10, NULL, NULL),
+('pierscieñ ASD', NULL, 10, NULL),
 ('Zwolnienie z egz', NULL, NULL, 20),
-('Strza³a w kolanie', NULL, NULL, NULL)
+('Strzala w kolanie', NULL, NULL, NULL)
 
 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (1, 1, 1, 3)
@@ -818,6 +819,9 @@ INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 
 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (1, 3, 3, 1)
+
+INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
+(1, 4, 1, 1)
 
 SELECT * FROM Characters C JOIN Inventory I ON C.Character_ID=I.Character_ID JOIN Items It On It.Item_ID=I.Item_ID
 
@@ -829,5 +833,4 @@ INSERT INTO EnemyDrops(Enemy_ID, Item_ID, Drop_chance) VALUES
 SELECT * FROM dbo.CharacterInventory(1) Inv JOIN Items Ite ON Ite.Item_ID = Inv.Item_ID
 SELECT * FROM Characters
 
-INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
-(1, 4, 1, 1)
+

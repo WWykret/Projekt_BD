@@ -74,29 +74,9 @@ CREATE TABLE Inventory (
 	PRIMARY KEY (Character_ID, Item_ID, Item_lvl)
 )
 --to chyba jest w sumie nie potrzebne
-/*
---Lista wszystkich statusów
-CREATE TABLE Statuses (
-	Status_ID INT PRIMARY KEY IDENTITY(1,1),
-	Name NVARCHAR(32) UNIQUE NOT NULL,
-	Attack INT,
-	Defence INT,
-	Hp INT,
-	Duration INT NOT NULL, --w turach
-	Chance FLOAT NOT NULL --procent na na³o¿enie
-)
-
---Lista Efektów
-CREATE TABLE Effects (
-	Character_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID),
-	Status_ID INT NOT NULL FOREIGN KEY REFERENCES Statuses(Status_ID),
-	Time_until_end INT NOT NULL
-	PRIMARY KEY (Character_ID, Status_ID)
-)
-*/
 --Lista Zbanowanych
 CREATE TABLE Banned (
-	Player_ID INT NOT NULL FOREIGN KEY REFERENCES Players(Player_ID),
+	Player_ID INT NOT NULL FOREIGN KEY REFERENCES Players(Player_ID) ON DELETE CASCADE,
 	Start DATE NOT NULL,
 	Finish DATE NOT NULL,
 	Reason NVARCHAR(256) NOT NULL
@@ -112,7 +92,7 @@ CREATE TABLE NPCs (
 
 --Lista Przeciwników
 CREATE TABLE Enemies (
-	Enemy_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID),
+	Enemy_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID) ON DELETE CASCADE,
 	Hp INT NOT NULL,
 	Defence INT NOT NULL,
 	Attack INT NOT NULL,
@@ -122,7 +102,7 @@ CREATE TABLE Enemies (
 
 --Lista przedmiotów które wypadaj¹
 CREATE TABLE EnemyDrops (
-	Enemy_ID INT NOT NULL FOREIGN KEY REFERENCES Enemies(Enemy_ID),
+	Enemy_ID INT NOT NULL FOREIGN KEY REFERENCES Enemies(Enemy_ID) ON DELETE CASCADE,
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
 	Drop_chance FLOAT NOT NULL
 	PRIMARY KEY (Enemy_ID, Item_ID)
@@ -130,13 +110,13 @@ CREATE TABLE EnemyDrops (
 
 --Lista Przyjaznych NPC
 CREATE TABLE Friends (
-	Friend_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID),
+	Friend_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID) ON DELETE CASCADE,
 	Store_ID INT UNIQUE, --ew. póŸniej dodaæ sequence
 )
 
 --Lista sklepów
 CREATE TABLE Stores (
-	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID),
+	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID) ON DELETE CASCADE,
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
 	Item_lvl INT NOT NULL,
 	Amount INT NOT NULL,
@@ -159,9 +139,8 @@ CREATE TABLE AuctionHouse (
 CREATE TABLE AuctionHouseBids (
 	Offer_ID INT NOT NULL FOREIGN KEY REFERENCES AuctionHouse(Offer_ID),
 	Bidder_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID),
-	Bid_date DATE NOT NULL,
 	Bid_amount INT NOT NULL
-	PRIMARY KEY (Offer_ID,Bidder_ID,Bid_date)
+	PRIMARY KEY (Offer_ID,Bidder_ID)
 )
 
 --Lista zadañ
@@ -176,6 +155,14 @@ CREATE TABLE Quests(
 	Item_ID INT FOREIGN KEY REFERENCES Items(Item_ID)  ,
 	Item_lvl INT,
 	Item_amount INT
+)
+
+--lista aktywnych questow
+CREATE TABLE QuestsTracker(
+	Character_ID INT NOT NULL REFERENCES Characters(Character_ID),
+	Quest_ID INT NOT NULL REFERENCES Quests(Quest_ID),
+	Quest_Status INT NOT NULL
+	PRIMARY KEY (Quest_ID,Character_ID)
 )
 
 --Lista nagród
@@ -339,7 +326,7 @@ RETURN
 GO
 
 --funkcja wypisuj¹ca wszystkie nagrody przyznane za dany quest
-CREATE FUNCTION RwardsForQuest (
+CREATE FUNCTION RewardsForQuest (
     @Quest_ID INT
 )
 RETURNS TABLE
@@ -488,7 +475,7 @@ BEGIN
 		FROM Characters
 		WHERE @Character_ID=@Character_ID)
 
-		EXEC RemoveMember @Player_ID=@Character_ID , @Guild_ID=@CharactersGuild
+		EXEC RemoveMember @Character_ID=@Character_ID , @Guild_ID=@CharactersGuild
 	END
 	ELSE 
 	BEGIN
@@ -568,6 +555,57 @@ BEGIN
 
 	END
 	
+END
+GO
+
+CREATE PROCEDURE AcceptQuest(@Character_ID INT,@Quest_ID INT)
+AS
+BEGIN
+	INSERT INTO QuestsTracker VALUES
+	(@Character_ID, @Quest_ID, 1)
+
+END
+GO
+
+CREATE PROCEDURE ReturnQuest(@Character_ID INT,@Quest_ID INT)
+AS
+BEGIN
+	UPDATE QuestsTracker
+	SET Quest_Status=0
+	WHERE Character_ID=@Character_ID AND Quest_ID=@Quest_ID
+
+END
+GO
+
+CREATE PROCEDURE BidOnAuction(@Character_ID INT,@Offer_ID INT, @Gold INT)
+AS
+BEGIN
+	DECLARE @Gold_Difrence INT
+	SET @Gold_Difrence=@Gold
+	IF(EXISTS(
+		SELECT *
+		FROM AuctionHouseBids
+		WHERE Offer_ID=@Offer_ID AND Bidder_ID=@Character_ID
+	))
+	BEGIN
+		SET @Gold_Difrence-=(
+			SELECT Bid_amount
+			FROM AuctionHouseBids
+			WHERE Offer_ID=@Offer_ID AND Bidder_ID=@Character_ID)
+
+		UPDATE AuctionHouseBids
+		SET Bid_amount=@Gold
+		WHERE Offer_ID=@Offer_ID AND Bidder_ID=@Character_ID
+	END
+	ELSE BEGIN
+		INSERT INTO AuctionHouseBids VALUES
+		(@Offer_ID, @Character_ID, @Gold)
+	END
+
+	UPDATE Characters
+	SET @Gold-=@Gold_Difrence
+	WHERE Character_ID=@Character_ID
+
 END
 GO
 
@@ -671,46 +709,7 @@ AS BEGIN
 	WHERE Character_ID=@Character_ID
 
 	END
-
 END
-GO
-
-/*
-CREATE TRIGGER AutoLevelUp ON Characters
-INSTEAD  OF UPDATE
-AS BEGIN
-
-	DECLARE @Character_ID INT;
-    DECLARE @Exp_Gain INT;
-
-    SELECT @Character_ID = Character_ID, @Exp_Gain=Character_exp
-	FROM INSERTED;
-
-    IF(@Character_exp>=1000)
-	BEGIN
-
-		UPDATE Characters
-		SET Lvl+=@Character_exp/1000, Character_exp=@Character_exp%1000
-		WHERE Character_ID=@Character_ID
-
-	END 
-
-	DECLARE @Guild_ID INT;
-
-	SET @Guild_ID=(
-		SELECT Guild_ID
-		FROM Characters
-		WHERE @Character_ID=Character_ID)
-
-	IF(@Guild_ID IS NOT NULL)
-		UPDATE Characters
-		SET Lvl+=@Character_exp/1000, Character_exp=@Character_exp%1000
-		WHERE Character_ID=@Character_ID
-
-	END 
-END
-*/
-
 GO
 
 CREATE TRIGGER DeleteGuild ON Guilds
@@ -768,11 +767,32 @@ AS BEGIN
 
 	EXEC RemoveMember @Character_ID=@Character_ID , @Guild_ID=@Guild_ID
 
+	DELETE FROM Inventory
+	WHERE Character_ID=@Character_ID
+
 	DELETE FROM Characters
 	WHERE Character_ID=@Character_ID
 
 END
 
+GO
+
+CREATE TRIGGER DestroyLocation ON Locations
+INSTEAD OF DELETE
+AS BEGIN
+
+	DECLARE @Location_ID INT
+	SET @Location_ID=(
+		SELECT Location_ID
+		FROM DELETED)
+
+	DELETE FROM LocationsConnetions
+	WHERE Source_Location__ID=@Location_ID OR Destination_Location_ID=@Location_ID
+
+	DELETE FROM Locations
+	WHERE Location_ID=Location_ID
+
+END
 GO
 
 INSERT INTO Players VALUES

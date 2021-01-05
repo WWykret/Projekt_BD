@@ -21,11 +21,11 @@ def login() -> int:
     cls()
     email = input('Email: ')
     password = input('Hasło: ')
-    success = pd.read_sql_query(f'''
+    player_id = int(pd.read_sql_query(f'''
         SELECT dbo.TryToLogin(N'{email}', N'{password}')
-    ''', conn).bool()
+    ''', conn))
     conn.commit()
-    return success
+    return player_id
 
 def register():
     cls()
@@ -48,3 +48,4 @@ def ban_player():
     conn.commit()
 
 def get_characters():
+    pass

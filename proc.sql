@@ -10,22 +10,22 @@ IF OBJECT_ID('BanPlayer', 'P') IS NOT NULL
 	DROP PROCEDURE BanPlayer
 
 IF OBJECT_ID('TryToLogin', 'FN') IS NOT NULL
-	DROP FUNCTION TryToLogin
+	DROP FUNCTION dbo.TryToLogin
 
-IF OBJECT_ID('CharacterInventory', 'TF') IS NOT NULL
-	DROP FUNCTION CharacterInventory
+IF OBJECT_ID('CharacterInventory', 'IF') IS NOT NULL
+	DROP FUNCTION dbo.CharacterInventory
 
-IF OBJECT_ID('PlayerCharacters', 'TF') IS NOT NULL
-	DROP FUNCTION PlayerCharacters
+IF OBJECT_ID('PlayerCharacters', 'IF') IS NOT NULL
+	DROP FUNCTION dbo.PlayerCharacters
 
-IF OBJECT_ID('CharactersInGuild', 'TF') IS NOT NULL
-	DROP FUNCTION CharactersInGuild
+IF OBJECT_ID('CharactersInGuild', 'IF') IS NOT NULL
+	DROP FUNCTION dbo.CharactersInGuild
 
-IF OBJECT_ID('EnemiesInLocation', 'TF') IS NOT NULL
-	DROP FUNCTION EnemiesInLocation
+IF OBJECT_ID('EnemiesInLocation', 'IF') IS NOT NULL
+	DROP FUNCTION dbo.EnemiesInLocation
 
-IF OBJECT_ID('FriendsInLocation', 'TF') IS NOT NULL
-	DROP FUNCTION FriendsInLocation
+IF OBJECT_ID('FriendsInLocation', 'IF') IS NOT NULL
+	DROP FUNCTION dbo.FriendsInLocation
 
 GO
 

@@ -63,8 +63,8 @@ CREATE TABLE Items (
 
 --Ekwipunek gracza
 CREATE TABLE Inventory (
-	Character_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID) ,
-	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID) ,
+	Character_ID INT NOT NULL FOREIGN KEY REFERENCES Characters(Character_ID),
+	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
 	Item_lvl INT,
 	Item_amount INT NOT NULL,
 	PRIMARY KEY (Character_ID, Item_ID, Item_lvl)
@@ -98,7 +98,7 @@ CREATE TABLE Enemies (
 --Lista przedmiotów które wypadają
 CREATE TABLE EnemyDrops (
 	Enemy_ID INT NOT NULL FOREIGN KEY REFERENCES Enemies(Enemy_ID) ON DELETE CASCADE,
-	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
+	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID) ON DELETE CASCADE,
 	Drop_chance FLOAT NOT NULL
 	PRIMARY KEY (Enemy_ID, Item_ID)
 )
@@ -111,8 +111,8 @@ CREATE TABLE Friends (
 
 --Lista sklepów
 CREATE TABLE Stores (
-	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID),
-	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
+	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID) ON DELETE CASCADE,
+	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID) ON DELETE CASCADE,
 	Item_lvl INT NOT NULL, --usuniecie Amount
 	Unit_cost INT NOT NULL
 	PRIMARY KEY (Store_ID, Item_ID, Item_lvl)
@@ -145,24 +145,24 @@ CREATE TABLE Quests(
 	Quest_desc NVARCHAR(256) UNIQUE NOT NULL,
 	Quest_Giver INT NOT NULL FOREIGN KEY REFERENCES NPCs(NPC_ID) ON DELETE CASCADE,
 	--warunki wygranej
-	Npc_ID INT FOREIGN KEY REFERENCES NPCs(NPC_ID) ,
-	Item_ID INT FOREIGN KEY REFERENCES Items(Item_ID)  ,
+	Npc_ID INT FOREIGN KEY REFERENCES NPCs(NPC_ID),
+	Item_ID INT FOREIGN KEY REFERENCES Items(Item_ID) ON DELETE CASCADE,
 	Item_lvl INT,
 	Item_amount INT
 )
 
 --lista aktywnych questow
 CREATE TABLE QuestsTracker(
-	Character_ID INT NOT NULL REFERENCES Characters(Character_ID),
-	Quest_ID INT NOT NULL REFERENCES Quests(Quest_ID),
+	Character_ID INT NOT NULL REFERENCES Characters(Character_ID) ON DELETE CASCADE,
+	Quest_ID INT NOT NULL REFERENCES Quests(Quest_ID) ON DELETE CASCADE,
 	Quest_Status INT NOT NULL
 	PRIMARY KEY (Quest_ID,Character_ID)
 )
 
 --Lista nagród
 CREATE TABLE Rewards(
-	Quest_ID INT NOT NULL REFERENCES Quests(Quest_ID) ,
-	Item_ID INT NOT NULL REFERENCES Items(Item_ID) ,
+	Quest_ID INT NOT NULL REFERENCES Quests(Quest_ID) ON DELETE CASCADE,
+	Item_ID INT NOT NULL REFERENCES Items(Item_ID),
 	Item_lvl INT,
 	Amount INT NOT NULL
 	PRIMARY KEY(Quest_ID, Item_ID, Item_lvl)
@@ -241,7 +241,7 @@ RETURN
 GO
 
 
---funkcja wypisuj¹ca wszystkich przyjaznych NPC w danej lokacji
+--funkcja wypisująca wszystkich przyjaznych NPC w danej lokacji
 CREATE FUNCTION FriendsInLocation (@Location_ID INT)
 RETURNS TABLE
 AS
@@ -283,7 +283,7 @@ CREATE FUNCTION ItemsInStore (@Store_ID INT)
 RETURNS TABLE
 AS
 RETURN
-    SELECT S.Item_ID, I.Name, S.Item_lvl, S.Unit_cost, S.Amount
+    SELECT S.Item_ID, I.Name, S.Item_lvl, S.Unit_cost
     FROM Stores S
 	LEFT JOIN Items I ON S.Item_ID=I.Item_ID
 	WHERE S.Store_ID=@Store_ID

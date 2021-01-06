@@ -92,15 +92,15 @@ INSERT INTO EnemyDrops(Enemy_ID, Item_ID, Drop_chance) VALUES
 (6, 4, 0.9)
 
 
-INSERT INTO Stores(Store_ID, Item_ID, Item_lvl, Amount, Unit_cost) VALUES
-(1, 1, 5, 10, 100),
-(1, 2, 8, 10, 200),
-(1, 3, 10, 10, 300),
-(2, 2, 99, 5, 1000),
-(1, 3, 1, 10, 300),
-(2, 2, 9, 5, 1000),
-(3, 2, 8, 10, 200),
-(4, 3, 10, 10, 300)
+INSERT INTO Stores(Store_ID, Item_ID, Item_lvl, Unit_cost) VALUES
+(1, 1, 5, 100),
+(1, 2, 8, 200),
+(1, 3, 10, 300),
+(2, 2, 99, 1000),
+(1, 3, 1, 300),
+(2, 2, 9, 1000),
+(3, 2, 8, 200),
+(4, 3, 10, 300)
 
 INSERT INTO Quests(Min_lvl, Quest_name, Quest_desc, Quest_Giver, Npc_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (2, 'poszukiwacze dzikow', 'jak w naziwe zadania', 3, 2, NULL, NULL, NULL)
@@ -140,12 +140,9 @@ EXEC AddMember @Character_ID=6,  @Guild_ID=1
 --EXEC AddMember @Character_ID=3,  @Guild_ID=1
 
 USE PROJECT
-UPDATE Characters SET Gold=100000 WHERE Character_ID=1
-SELECT * FROM Inventory WHERE Character_ID=1
-SELECT * FROM Stores WHERE Store_ID=1
-SELECT Gold FROM Characters WHERE Character_ID=1
-EXEC AttemptToBuy @Character_ID=1, @Store_ID=1, @Item_ID=3, @Item_lvl=1, @Amount=11
-SELECT * FROM Inventory WHERE Character_ID=1
-SELECT * FROM Stores WHERE Store_ID=1
-SELECT Gold FROM Characters WHERE Character_ID=1
+SELECT * FROM Locations
+SELECT * FROM LocationsConnetions
+DELETE FROM Locations WHERE Location_ID=2
+SELECT * FROM Locations
+SELECT * FROM LocationsConnetions
 USE master

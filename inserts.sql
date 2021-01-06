@@ -1,3 +1,5 @@
+USE Project
+
 INSERT INTO Players VALUES
 ('password 123', 'email1@wp.pl'),
 ('password 123', 'email2@wp.pl'),
@@ -136,3 +138,5 @@ EXEC AddMember @Character_ID=2,  @Guild_ID=2
 EXEC AddMember @Character_ID=6,  @Guild_ID=1
 
 --EXEC AddMember @Character_ID=3,  @Guild_ID=1
+
+USE master

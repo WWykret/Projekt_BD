@@ -6,9 +6,9 @@ INSERT INTO Players VALUES
 ('password 123', 'email3@wp.pl')
 
 INSERT INTO Locations VALUES
-('piÂ¿mowy jar', 1),
-('piÂ¿mowy gaj', 2),
-('Sala wykÂ³adowa', 3)
+('pi¿mowy jar', 1),
+('pi¿mowy gaj', 2),
+('Sala wyk³adowa', 3)
 
 INSERT INTO Characters(Player_ID, Nick, Location_ID, Lvl) VALUES
 (1, 'Dunk_man1', 1, 2),
@@ -19,10 +19,10 @@ INSERT INTO Characters(Player_ID, Nick, Location_ID, Lvl) VALUES
 (3, 'kawa_420', 1, 1)
 
 INSERT INTO Guilds(Guild_owner, Name) VALUES
-(1, 'Whatever')
+(1, 'Super Gildia')
 
 INSERT INTO Guilds(Guild_owner, Name) VALUES
-(3, 'Whatever Delux')
+(3, 'BD gr. 1')
 
 
 INSERT INTO LocationsConnetions VALUES
@@ -33,13 +33,13 @@ INSERT INTO LocationsConnetions VALUES
 
 INSERT INTO NPCs VALUES
 (1, 'Gerarda'),
-(3, 'GewisÂ³aw'),
+(3, 'Gewis³aw'),
 (1, 'Genowefa'),
-(1, 'RafaÂ³ Kawa'),
+(1, 'Matematyka Dyskretna'),
 (1, 'Kolos z ASD'),
 (1, 'Prokekt z BD'),
-(2, 'Jan Pawel 2'),
-(3, 'Jan Pawel 3'),
+(2, 'Du¿y potwór'),
+(3, 'Bardzo du¿y potwór'),
 (2, 'Pani Sekretarka')
 
 INSERT INTO Banned VALUES
@@ -59,8 +59,8 @@ INSERT INTO Enemies VALUES
 (8,2,1,10,2137)
 
 INSERT INTO Items VALUES
-('Mlot Kawy', 10, NULL, NULL),
-('pierscieÃ± ASD', NULL, 10, NULL),
+('Mlot Analizy Matematycznej', 10, NULL, NULL),
+('pierscieñ ASD', NULL, 10, NULL),
 ('Zwolnienie z egz', NULL, NULL, 20),
 ('Strzala w kolanie', NULL, NULL, NULL)
 
@@ -103,7 +103,7 @@ INSERT INTO Stores(Store_ID, Item_ID, Item_lvl, Unit_cost) VALUES
 (4, 3, 10, 300)
 
 INSERT INTO Quests(Min_lvl, Quest_name, Quest_desc, Quest_Giver, Npc_ID, Item_ID, Item_lvl, Item_amount) VALUES
-(2, 'poszukiwacze dzikow', 'jak w naziwe zadania', 3, 2, NULL, NULL, NULL)
+(2, 'poszukiwacze dzikow', 'Opis zadania tutaj', 3, 2, NULL, NULL, NULL)
 
 INSERT INTO QuestsTracker VALUES
 (4, 1, 1)
@@ -119,12 +119,8 @@ INSERT INTO AuctionHouseBids VALUES
 (1, 5, 500)
 
 
-
-------
-
-
 INSERT INTO Banned VALUES
-(3, DATEADD(DAY, -13, GETDATE()), DATEADD(DAY, -4, GETDATE()), 'N-word')
+(3, DATEADD(DAY, -13, GETDATE()), DATEADD(DAY, -4, GETDATE()), 'Nielegalne oprogramowanie')
 
 
 EXEC AddMember @Character_ID=2,  @Guild_ID=1
@@ -137,156 +133,27 @@ EXEC AddMember @Character_ID=2,  @Guild_ID=2
 
 EXEC AddMember @Character_ID=6,  @Guild_ID=1
 
---EXEC AddMember @Character_ID=3,  @Guild_ID=1
-/*
-USE PROJECT
-UPDATE Characters SET Gold=100000 WHERE Character_ID=1
-SELECT * FROM Inventory WHERE Character_ID=1
-SELECT * FROM Stores WHERE Store_ID=1
-SELECT Gold FROM Characters WHERE Character_ID=1
-EXEC AttemptToBuy @Character_ID=1, @Store_ID=1, @Item_ID=3, @Item_lvl=1, @Amount=11
-SELECT * FROM Inventory WHERE Character_ID=1
-SELECT * FROM Stores WHERE Store_ID=1
-SELECT Gold FROM Characters WHERE Character_ID=1
-*/
-/*
-SELECT *
-FROM Characters
-
-EXEC Death @Character_ID=1
-
-SELECT *
-FROM Characters
-
-EXEC Death @Character_ID=1
-
-SELECT *
-FROM Characters
-
-EXEC Death @Character_ID=2
-
-SELECT *
-FROM Characters
-*/
-/*
-SELECT *
-FROM Characters
-
-EXEC Gain_Exp @Character_ID=2, @Exp_gain =500
-
-SELECT *
-FROM Characters
-
-EXEC Gain_Exp @Character_ID=2, @Exp_gain =500
-
-SELECT *
-FROM Characters
-
-EXEC Gain_Exp @Character_ID=2, @Exp_gain =500
-
-SELECT *
-FROM Characters
-*/
-/*
-SELECT *
-FROM QuestsTracker
-
-EXEC AcceptQuest @Character_ID=2, @Quest_ID =1
-
-SELECT *
-FROM QuestsTracker
-
-EXEC ReturnQuest @Character_ID=2, @Quest_ID =1
-
-SELECT *
-FROM QuestsTracker
- */
- /*
- SELECT *
-FROM AuctionHouse
-
- SELECT *
-FROM AuctionHouseBids
-
- SELECT *
-FROM Characters
-
-EXEC BidOnAuction @Character_ID=1, @Offer_ID=1, @Gold=300
-
-  SELECT *
-FROM AuctionHouseBids
-
- SELECT *
-FROM Characters
-
-EXEC BidOnAuction @Character_ID=1, @Offer_ID=1, @Gold=400
-
-   SELECT *
-FROM AuctionHouseBids
-
- SELECT *
-FROM Characters
-*/
-
-/*
- SELECT *
-FROM Characters
- SELECT *
-FROM Guilds
-
-INSERT INTO Guilds(Guild_owner, Name) VALUES
-(3, 'LOL')
-
- SELECT *
-FROM Characters
- SELECT *
-FROM Guilds
-*/
-
- SELECT *
-FROM Inventory
-
 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (1, 1, 2, 3)
-
- SELECT *
-FROM Inventory
 
 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (1, 2, 20, 30)
 
- SELECT *
-FROM Inventory
-
 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (1, 2, 20,2)
 
- SELECT *
-FROM Inventory
 
 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (1, 2, 20,-1)
 
- SELECT *
-FROM Inventory
-
 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (1, 2, 20,-100)
 
- SELECT *
-FROM Inventory
 
 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (1, 2, 21,-100)
 
- SELECT *
-FROM Inventory
-
 DELETE FROM Inventory
 WHERE Character_ID=1 AND Item_ID=1 AND Item_lvl=2
-
- SELECT *
-FROM Inventory
-
 
 USE master

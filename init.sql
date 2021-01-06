@@ -30,6 +30,7 @@ CREATE TABLE Locations(
 	Location_lvl INT NOT NULL
 )
 
+--Lista połączeń między lokacjami
 CREATE TABLE LocationsConnetions(
 	Source_Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
 	Destination_Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
@@ -69,7 +70,7 @@ CREATE TABLE Inventory (
 	Item_amount INT NOT NULL,
 	PRIMARY KEY (Character_ID, Item_ID, Item_lvl)
 )
---to chyba jest w sumie nie potrzebne
+
 --Lista Zbanowanych
 CREATE TABLE Banned (
 	Player_ID INT NOT NULL FOREIGN KEY REFERENCES Players(Player_ID) ON DELETE CASCADE,
@@ -113,7 +114,7 @@ CREATE TABLE Friends (
 CREATE TABLE Stores (
 	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID) ON DELETE CASCADE,
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID) ON DELETE CASCADE,
-	Item_lvl INT NOT NULL, --usuniecie Amount
+	Item_lvl INT NOT NULL,
 	Unit_cost INT NOT NULL
 	PRIMARY KEY (Store_ID, Item_ID, Item_lvl)
 )
@@ -168,7 +169,7 @@ CREATE TABLE Rewards(
 	PRIMARY KEY(Quest_ID, Item_ID, Item_lvl)
 )
 
-------procedury i funkcje i reszta gowna
+------procedury, funkcje i widoki
 
 ----widoki
 
@@ -218,7 +219,7 @@ RETURN
 	WHERE C.Player_ID=@Player_ID
 GO
 
---funkcja wypisuj¹ca postacie nalezace do danej guildi
+--funkcja wypisująca postacie nalezace do danej gildii
 CREATE FUNCTION CharactersInGuild (@Guild_ID INT)
 RETURNS TABLE
 AS
@@ -229,7 +230,7 @@ RETURN
 GO
 
 
---funkcja wypisuj¹ca wszystkich przeciwnikow w danej lokacji
+--funkcja wypisująca wszystkich przeciwnikow w danej lokacji
 CREATE FUNCTION EnemiesInLocation (@Location_ID INT)
 RETURNS TABLE
 AS
@@ -252,7 +253,7 @@ RETURN
 	WHERE N.Location_ID=@Location_ID
 GO
 
---funkcja wypisuj¹ca wszystkich lokacje do ktorych moze przejsc postac
+--funkcja wypisująca wszystkich lokacje do ktorych moze przejsc postac
 CREATE FUNCTION AccessibleLocations (@Character_ID INT)
 RETURNS TABLE
 AS
@@ -267,7 +268,7 @@ RETURN
 	LEFT JOIN Locations L ON Lc.Destination_Location_ID=L.Location_ID
 GO
 
---funkcja wypisuj¹ca wszystkie questy dawane przez danego przyjaznego NPC
+--funkcja wypisująca wszystkie questy dawane przez danego przyjaznego NPC
 CREATE FUNCTION NPCsQuests (@Friend_ID INT)
 RETURNS TABLE
 AS
@@ -278,7 +279,7 @@ RETURN
 
 GO
 
---funkcja wypisuj¹ca wszystkie przedmioty w danym sklepie
+--funkcja wypisująca wszystkie przedmioty w danym sklepie
 CREATE FUNCTION ItemsInStore (@Store_ID INT)
 RETURNS TABLE
 AS
@@ -290,7 +291,7 @@ RETURN
 
 GO
 
---funkcja wypisuj¹ca wszystkie nagrody przyznane za dany quest
+--funkcja wypisująca wszystkie nagrody przyznane za dany quest
 CREATE FUNCTION RewardsForQuest (@Quest_ID INT)
 RETURNS TABLE
 AS
@@ -316,7 +317,7 @@ GO
 CREATE PROCEDURE CreateCharacter(@PlayerID INT, @Nick NVARCHAR(32))
 AS
 	IF @Nick NOT IN (SELECT Email FROM Players)
-		INSERT INTO Characters(Player_ID, Nick) VALUES (@PlayerID, @Nick) --TERAZ DZIAŁA -- TRZEBA DODAC ID LOKACJI
+		INSERT INTO Characters(Player_ID, Nick) VALUES (@PlayerID, @Nick)
 
 GO
 
@@ -574,7 +575,7 @@ GO
 
 --wyzwalacze
 
-CREATE TRIGGER addItem ON Inventory--dodaje tylko jeden wierszu
+CREATE TRIGGER addItem ON Inventory
 INSTEAD OF INSERT
 AS BEGIN
 
@@ -736,22 +737,4 @@ AS BEGIN
 
 END
 
-GO
-
-CREATE TRIGGER DestroyLocation ON Locations
-INSTEAD OF DELETE
-AS BEGIN
-
-	DECLARE @Location_ID INT
-	SET @Location_ID=(
-		SELECT Location_ID
-		FROM DELETED)
-
-	DELETE FROM LocationsConnetions
-	WHERE Source_Location_ID=@Location_ID OR Destination_Location_ID=@Location_ID
-
-	DELETE FROM Locations
-	WHERE Location_ID=Location_ID
-
-END
 GO

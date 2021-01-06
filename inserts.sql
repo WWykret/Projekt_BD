@@ -139,4 +139,13 @@ EXEC AddMember @Character_ID=6,  @Guild_ID=1
 
 --EXEC AddMember @Character_ID=3,  @Guild_ID=1
 
+USE PROJECT
+UPDATE Characters SET Gold=100000 WHERE Character_ID=1
+SELECT * FROM Inventory WHERE Character_ID=1
+SELECT * FROM Stores WHERE Store_ID=1
+SELECT Gold FROM Characters WHERE Character_ID=1
+EXEC AttemptToBuy @Character_ID=1, @Store_ID=1, @Item_ID=3, @Item_lvl=1, @Amount=11
+SELECT * FROM Inventory WHERE Character_ID=1
+SELECT * FROM Stores WHERE Store_ID=1
+SELECT Gold FROM Characters WHERE Character_ID=1
 USE master

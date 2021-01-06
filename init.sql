@@ -41,7 +41,7 @@ CREATE TABLE Characters(
 	Character_ID INT PRIMARY KEY IDENTITY(1,1),
 	Player_ID INT NOT NULL FOREIGN KEY REFERENCES Players(Player_ID),
 	Guild_ID INT FOREIGN KEY REFERENCES Guilds(Guild_ID),
-	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
+	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID) DEFAULT 1,
 	Nick NVARCHAR(32) UNIQUE NOT NULL,
 	Max_hp INT NOT NULL DEFAULT 100,
 	Hp INT NOT NULL DEFAULT 100,
@@ -113,8 +113,7 @@ CREATE TABLE Friends (
 CREATE TABLE Stores (
 	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
-	Item_lvl INT NOT NULL,
-	Amount INT NOT NULL,
+	Item_lvl INT NOT NULL, --usuniecie Amount
 	Unit_cost INT NOT NULL
 	PRIMARY KEY (Store_ID, Item_ID, Item_lvl)
 )
@@ -317,7 +316,7 @@ GO
 CREATE PROCEDURE CreateCharacter(@PlayerID INT, @Nick NVARCHAR(32))
 AS
 	IF @Nick NOT IN (SELECT Email FROM Players)
-		INSERT INTO Characters(Player_ID, Nick) VALUES (@PlayerID, @Nick)
+		INSERT INTO Characters(Player_ID, Nick) VALUES (@PlayerID, @Nick) --TERAZ DZIAŁA -- TRZEBA DODAC ID LOKACJI
 
 GO
 

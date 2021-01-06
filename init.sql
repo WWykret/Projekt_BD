@@ -21,10 +21,6 @@ CREATE TABLE Guilds(
 	Guild_owner INT NOT NULL,
 	Name NVARCHAR(32) UNIQUE NOT NULL,
 	Members INT NOT NULL DEFAULT 1,
-	/*
-	Guild_lvl INT NOT NULL,
-	Guild_exp INT NOT NULL
-	*/
 )
 
 --Lista lokacji
@@ -92,15 +88,14 @@ CREATE TABLE NPCs (
 
 --Lista Przeciwników
 CREATE TABLE Enemies (
-	Enemy_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID) ON DELETE CASCADE,
+	Enemy_ID INT PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID) ON DELETE CASCADE,
 	Hp INT NOT NULL,
 	Defence INT NOT NULL,
 	Attack INT NOT NULL,
 	Kill_exp INT NOT NULL,
-	--Status_on_hit INT REFERENCES Statuses(Status_ID)  --to jest potencjalny powut zeby zachowac statusy, mozna tego uzyc do wyzwalacza
 )
 
---Lista przedmiotów które wypadaj¹
+--Lista przedmiotów które wypadają
 CREATE TABLE EnemyDrops (
 	Enemy_ID INT NOT NULL FOREIGN KEY REFERENCES Enemies(Enemy_ID) ON DELETE CASCADE,
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
@@ -111,12 +106,12 @@ CREATE TABLE EnemyDrops (
 --Lista Przyjaznych NPC
 CREATE TABLE Friends (
 	Friend_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID) ON DELETE CASCADE,
-	Store_ID INT UNIQUE NOT NULL, --ew. póŸniej dodaæ sequence
+	Store_ID INT UNIQUE NOT NULL
 )
 
 --Lista sklepów
 CREATE TABLE Stores (
-	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID),
+	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID) ON DELETE CASCADE,
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
 	Item_lvl INT NOT NULL,
 	Amount INT NOT NULL,
@@ -143,13 +138,13 @@ CREATE TABLE AuctionHouseBids (
 	PRIMARY KEY (Offer_ID,Bidder_ID)
 )
 
---Lista zadañ
+--Lista zadań
 CREATE TABLE Quests(
-	Quest_ID INT NOT NULL PRIMARY KEY IDENTITY(1,1),
+	Quest_ID INT PRIMARY KEY IDENTITY(1,1),
 	Min_lvl INT NOT NULL,
 	Quest_name NVARCHAR(32) UNIQUE NOT NULL,
-	Quest_desc NVARCHAR(256) /*UNIQUE*/ NOT NULL,
-	Quest_Giver  INT FOREIGN KEY REFERENCES NPCs(NPC_ID) ON DELETE CASCADE,
+	Quest_desc NVARCHAR(256) UNIQUE NOT NULL,
+	Quest_Giver INT NOT NULL FOREIGN KEY REFERENCES NPCs(NPC_ID),
 	--warunki wygranej
 	Npc_ID INT FOREIGN KEY REFERENCES NPCs(NPC_ID) ,
 	Item_ID INT FOREIGN KEY REFERENCES Items(Item_ID)  ,
@@ -202,7 +197,9 @@ END
 GO
 
 --funkcja wypisujaca przedmioty nalezace do danej postaci
-CREATE FUNCTION CharacterInventory (@Character_ID INT)
+CREATE FUNCTION CharacterInventory (
+    @Character_ID INT
+)
 RETURNS TABLE
 AS
 RETURN
@@ -213,7 +210,9 @@ RETURN
 GO
 
 --funkcja wypisujaca postacie utworzone przez danego gracza
-CREATE FUNCTION PlayerCharacters (@Player_ID INT)
+CREATE FUNCTION PlayerCharacters (
+    @Player_ID INT
+)
 RETURNS TABLE
 AS
 RETURN
@@ -225,7 +224,9 @@ RETURN
 GO
 
 --funkcja wypisuj¹ca postacie nalezace do danej guildi
-CREATE FUNCTION CharactersInGuild (@Guild_ID INT)
+CREATE FUNCTION CharactersInGuild (
+    @Guild_ID INT
+)
 RETURNS TABLE
 AS
 RETURN
@@ -236,7 +237,9 @@ GO
 
 
 --funkcja wypisuj¹ca wszystkich przeciwnikow w danej lokacji
-CREATE FUNCTION EnemiesInLocation (@Location_ID INT)
+CREATE FUNCTION EnemiesInLocation (
+    @Location_ID INT
+)
 RETURNS TABLE
 AS
 RETURN
@@ -248,7 +251,9 @@ GO
 
 
 --funkcja wypisuj¹ca wszystkich przyjaznych NPC w danej lokacji
-CREATE FUNCTION FriendsInLocation (@Location_ID INT)
+CREATE FUNCTION FriendsInLocation (
+    @Location_ID INT
+)
 RETURNS TABLE
 AS
 RETURN
@@ -259,7 +264,9 @@ RETURN
 GO
 
 --funkcja wypisuj¹ca wszystkich lokacje do ktorych moze przejsc postac
-CREATE FUNCTION AccessibleLocations (@Character_ID INT)
+CREATE FUNCTION AccessibleLocations (
+    @Character_ID INT
+)
 RETURNS TABLE
 AS
 RETURN
@@ -274,7 +281,22 @@ RETURN
 GO
 
 --funkcja wypisuj¹ca wszystkie questy dawane przez danego przyjaznego NPC
-CREATE FUNCTION NPCsQuests (@Friend_ID INT)
+CREATE FUNCTION NPCsQuests (
+    @Friend_ID INT
+)
+RETURNS TABLE
+AS
+RETURN
+    SELECT Q.Quest_ID, Q.Quest_name, Q.Min_lvl
+    FROM Quests Q
+	WHERE Q.Quest_Giver=@Friend_ID
+
+GO
+
+--funkcja wypisuj¹ca wszystkie questy dawane przez danego przyjaznego NPC
+CREATE FUNCTION AccessibleQuests (
+    @Friend_ID INT
+)
 RETURNS TABLE
 AS
 RETURN
@@ -285,7 +307,9 @@ RETURN
 GO
 
 --funkcja wypisuj¹ca wszystkie przedmioty w danym sklepie
-CREATE FUNCTION ItemsInStore (@Store_ID INT)
+CREATE FUNCTION ItemsInStore (
+    @Store_ID INT
+)
 RETURNS TABLE
 AS
 RETURN
@@ -297,7 +321,9 @@ RETURN
 GO
 
 --funkcja wypisuj¹ca wszystkie nagrody przyznane za dany quest
-CREATE FUNCTION RewardsForQuest (@Quest_ID INT)
+CREATE FUNCTION RewardsForQuest (
+    @Quest_ID INT
+)
 RETURNS TABLE
 AS
 RETURN
@@ -423,8 +449,8 @@ BEGIN
 		WHERE Guild_ID=@Guild_ID;
 
 		UPDATE Characters
-		SET Guild_ID=NULL
-		WHERE Character_ID=@Character_ID AND Guild_ID=@Guild_ID;
+		SET @Guild_ID=NULL
+		WHERE Guild_ID=@Guild_ID;
 	END
 END
 GO
@@ -435,24 +461,27 @@ BEGIN
 	IF(EXISTS(
 		SELECT *
 		FROM Characters
-		WHERE Character_ID=@Character_ID AND Guild_ID IS NOT NULL
+		WHERE @Character_ID=@Character_ID AND Guild_ID IS NOT NULL
 		))
 	BEGIN
 	DECLARE @CharactersGuild INT
 	SET @CharactersGuild=(
 		SELECT Guild_ID
 		FROM Characters
-		WHERE Character_ID=@Character_ID)
+		WHERE @Character_ID=@Character_ID)
 
 		EXEC RemoveMember @Character_ID=@Character_ID , @Guild_ID=@CharactersGuild
 	END
-	UPDATE Guilds
-	SET Members+=1
-	WHERE Guild_ID=@Guild_ID;
+	ELSE 
+	BEGIN
+		UPDATE Guilds
+		SET Members+=1
+		WHERE Guild_ID=@Guild_ID;
 
-	UPDATE Characters
-	SET Guild_ID=@Guild_ID
-	WHERE Character_ID=@Character_ID;
+		UPDATE Characters
+		SET @Guild_ID=@Guild_ID
+		WHERE @Character_ID=@Character_ID;
+	END
 
 END
 GO
@@ -760,250 +789,3 @@ AS BEGIN
 
 END
 GO
-
-
-
-INSERT INTO Players VALUES
-('password 123', 'email1@wp.pl'),
-('password 123', 'email2@wp.pl'),
-('password 123', 'email3@wp.pl')
-
-INSERT INTO Locations VALUES
-('pi�mowy jar', 1),
-('pi�mowy gaj', 2),
-('Sala wyk�adowa', 3)
-
-INSERT INTO Characters(Player_ID, Nick, Location_ID, Lvl) VALUES
-(1, 'Dunk_man1', 1, 2),
-(1, 'Dunk_man2', 2, 1),
-(1, 'Dunk_man3', 3, 1),
-(1, 'Dunk_man4', 1, 1),
-(2, 'kawa_22', 1, 1),
-(3, 'kawa_420', 1, 1)
-
-INSERT INTO Guilds(Guild_owner, Name) VALUES
-(1, 'Whatever')
-
-INSERT INTO Guilds(Guild_owner, Name) VALUES
-(3, 'Whatever Delux')
-
-
-INSERT INTO LocationsConnetions VALUES
-(1, 2),
-(2, 1),
-(1, 3),
-(3, 1)
-
-INSERT INTO NPCs VALUES
-(1, 'Gerarda'),
-(3, 'Gewis³aw'),
-(1, 'Genowefa'),
-(1, 'Rafa³ Kawa'),
-(1, 'Kolos z ASD'),
-(1, 'Prokekt z BD'),
-(2, 'Jan Pawel 2'),
-(3, 'Jan Pawel 3'),
-(2, 'Pani Sekretarka')
-
-INSERT INTO Banned VALUES
-(3, GETDATE(), DATEADD(DAY, 3, GETDATE()), 'Wylgaryzmy na czacie')
-
-INSERT INTO Friends VALUES
-(1, 1),
-(2, 3),
-(3, 2),
-(9, 4)
-
-INSERT INTO Enemies VALUES
-(4, 10, 10, 10, 10),
-(5, 20, 5, 10, 10),
-(6, 5, 20, 5, 10),
-(7,3,4,2,2137),
-(8,2,1,10,2137)
-
-INSERT INTO Items VALUES
-('Mlot Kawy', 10, NULL, NULL),
-('pierscie� ASD', NULL, 10, NULL),
-('Zwolnienie z egz', NULL, NULL, 20),
-('Strzala w kolanie', NULL, NULL, NULL)
-
-INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
-(1, 1, 1, 3)
-
-INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
-(1, 2, 2, 2)
-
-INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
-(1, 3, 3, 1)
-
-INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
-(1, 4, 1, 1)
-
-INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
-(2, 2, 3, 10)
-
-INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
-(2, 1, 10, 1)
-
-INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
-(3, 4, 1, 1)
-
-
-INSERT INTO EnemyDrops(Enemy_ID, Item_ID, Drop_chance) VALUES
-(4, 4, 0.9),
-(5, 4, 0.9),
-(6, 4, 0.9)
-
-
-INSERT INTO Stores(Store_ID, Item_ID, Item_lvl, Amount, Unit_cost) VALUES
-(1, 1, 5, 10, 100),
-(1, 2, 8, 10, 200),
-(1, 3, 10, 10, 300),
-(2, 2, 99, 5, 1000),
-(1, 3, 1, 10, 300),
-(2, 2, 9, 5, 1000),
-(3, 2, 8, 10, 200),
-(4, 3, 10, 10, 300)
-
-INSERT INTO Quests(Min_lvl, Quest_name, Quest_desc, Quest_Giver, Npc_ID, Item_ID, Item_lvl, Item_amount) VALUES
-(2, 'poszukiwacze dzikow', 'jak w naziwe zadania', 3, 2, NULL, NULL, NULL)
-
-INSERT INTO QuestsTracker VALUES
-(4, 1, 1)
-
-INSERT INTO Rewards VALUES
-(1, 1, 2, 3),
-(1, 3, 2, 3)
-
-INSERT INTO AuctionHouse VALUES
-(3, 3, 1, 300, GETDATE(), DATEADD(DAY, 3, GETDATE()))
-
-INSERT INTO AuctionHouseBids VALUES
-(1, 5, 500)
-
-
-
-------
-
-
-INSERT INTO Banned VALUES
-(3, DATEADD(DAY, -13, GETDATE()), DATEADD(DAY, -4, GETDATE()), 'N-word')
-
-
-EXEC AddMember @Character_ID=2,  @Guild_ID=1
-
-EXEC AddMember @Character_ID=4,  @Guild_ID=2
-
-EXEC AddMember @Character_ID=6,  @Guild_ID=2
-
-EXEC AddMember @Character_ID=2,  @Guild_ID=2
-
-EXEC AddMember @Character_ID=6,  @Guild_ID=1
-
---EXEC AddMember @Character_ID=3,  @Guild_ID=1
-
-SELECT * 
-FROM Players
-SELECT * 
-FROM Guilds
-SELECT * 
-FROM Locations
-SELECT * 
-FROM LocationsConnetions
-SELECT * 
-FROM Characters
-SELECT * 
-FROM Inventory
-SELECT * 
-FROM Banned
-SELECT * 
-FROM NPCs
-SELECT * 
-FROM Enemies
-SELECT * 
-FROM EnemyDrops
-SELECT * 
-FROM Friends
-SELECT * 
-FROM Stores
-SELECT * 
-FROM AuctionHouse
-SELECT * 
-FROM AuctionHouseBids
-SELECT * 
-FROM Quests
-SELECT * 
-FROM QuestsTracker
-SELECT * 
-FROM Rewards
-
-SELECT *
-FROM CurrentlyBanned
-
-SELECT dbo.TryToLogin ('email1@wp.pl', 'password 123')
-SELECT dbo.TryToLogin ('email2@wp.pl', 'password 123')
-SELECT dbo.TryToLogin ('email3@wp.pl', 'password 123')
-SELECT dbo.TryToLogin ('email2@wp.pl', 'password 1234')
-SELECT dbo.TryToLogin ('sxggs', 'fe52hhd')
-
-
-SELECT *
-FROM CharacterInventory (1)
-SELECT *
-FROM CharacterInventory (2)
-SELECT *
-FROM CharacterInventory (3)
-SELECT *
-FROM CharacterInventory (4)
-
-SELECT *
-FROM PlayerCharacters(1)
-SELECT *
-FROM PlayerCharacters(2)
-
-SELECT *
-FROM CharactersInGuild(1)
-SELECT *
-FROM CharactersInGuild(2)
-
-SELECT *
-FROM EnemiesInLocation(1)
-SELECT *
-FROM EnemiesInLocation(2)
-SELECT *
-FROM EnemiesInLocation(3)
-
-SELECT *
-FROM FriendsInLocation(1)
-SELECT *
-FROM FriendsInLocation(2)
-SELECT *
-FROM FriendsInLocation(3)
-
-SELECT *
-FROM AccessibleLocations(1)
-SELECT *
-FROM AccessibleLocations(2)
-SELECT *
-FROM AccessibleLocations(3)
-
-SELECT *
-FROM NPCsQuests(2)
-SELECT *
-FROM NPCsQuests(3)
-
-SELECT *
-FROM ItemsInStore(1)
-SELECT *
-FROM ItemsInStore(2)
-SELECT *
-FROM ItemsInStore(3)
-SELECT *
-FROM ItemsInStore(4)
-
-SELECT *
-FROM RewardsForQuest(1)
- 
-
-
- 

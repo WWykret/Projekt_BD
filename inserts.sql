@@ -70,15 +70,6 @@ INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (1, 4, 1, 1)
 
-INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
-(2, 2, 3, 10)
-
-INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
-(2, 1, 10, 1)
-
-INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
-(3, 4, 1, 1)
-
 
 INSERT INTO EnemyDrops(Enemy_ID, Item_ID, Drop_chance) VALUES
 (4, 4, 0.9),
@@ -108,16 +99,4 @@ INSERT INTO AuctionHouse VALUES
 INSERT INTO AuctionHouseBids VALUES
 (1, 5, 500)
 
-
-
-------
-
-
-INSERT INTO Banned VALUES
-(3, DATEADD(DAY, -13, GETDATE()), DATEADD(DAY, -4, GETDATE()), 'N-word')
-
-EXEC AddMember @Character_ID=2,  @Guild_ID=1
-
-EXEC AddMember @Character_ID=4,  @Guild_ID=2
-
-EXEC AddMember @Character_ID=6,  @Guild_ID=2
+USE master

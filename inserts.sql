@@ -6,9 +6,9 @@ INSERT INTO Players VALUES
 ('password 123', 'email3@wp.pl')
 
 INSERT INTO Locations VALUES
-('pi¿mowy jar', 1),
-('pi¿mowy gaj', 2),
-('Sala wyk³adowa', 3)
+('piÂ¿mowy jar', 1),
+('piÂ¿mowy gaj', 2),
+('Sala wykÂ³adowa', 3)
 
 INSERT INTO Characters(Player_ID, Nick, Location_ID, Lvl) VALUES
 (1, 'Dunk_man1', 1, 2),
@@ -33,9 +33,9 @@ INSERT INTO LocationsConnetions VALUES
 
 INSERT INTO NPCs VALUES
 (1, 'Gerarda'),
-(3, 'Gewis³aw'),
+(3, 'GewisÂ³aw'),
 (1, 'Genowefa'),
-(1, 'Rafa³ Kawa'),
+(1, 'RafaÂ³ Kawa'),
 (1, 'Kolos z ASD'),
 (1, 'Prokekt z BD'),
 (2, 'Jan Pawel 2'),
@@ -60,7 +60,7 @@ INSERT INTO Enemies VALUES
 
 INSERT INTO Items VALUES
 ('Mlot Kawy', 10, NULL, NULL),
-('pierscieñ ASD', NULL, 10, NULL),
+('pierscieÃ± ASD', NULL, 10, NULL),
 ('Zwolnienie z egz', NULL, NULL, 20),
 ('Strzala w kolanie', NULL, NULL, NULL)
 
@@ -287,9 +287,6 @@ WHERE Character_ID=1 AND Item_ID=1 AND Item_lvl=2
 
  SELECT *
 FROM Inventory
-
-
-
 
 
 USE master

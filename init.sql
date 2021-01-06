@@ -20,7 +20,7 @@ CREATE TABLE Guilds(
 	Guild_ID INT PRIMARY KEY IDENTITY(1,1),
 	Guild_owner INT NOT NULL,
 	Name NVARCHAR(32) UNIQUE NOT NULL,
-	Members INT NOT NULL DEFAULT 1,
+	Members INT NOT NULL DEFAULT 0,
 )
 
 --Lista lokacji
@@ -743,10 +743,8 @@ AS BEGIN
 		SELECT Guild_ID
 		FROM INSERTED
 	)
-
-	UPDATE Characters
-	SET Guild_ID=@Giuld_ID
-	WHERE Character_ID=@Character_ID
+	---tu cos zmienialem
+	EXEC AddMember @Character_ID=@Character_ID, @Guild_ID=@Character_ID
 
 END
 GO

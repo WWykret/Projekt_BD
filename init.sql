@@ -20,7 +20,7 @@ CREATE TABLE Guilds(
 	Guild_ID INT PRIMARY KEY IDENTITY(1,1),
 	Guild_owner INT NOT NULL,
 	Name NVARCHAR(32) UNIQUE NOT NULL,
-	Members INT NOT NULL DEFAULT 0,
+	Members INT NOT NULL DEFAULT 1,
 )
 
 --Lista lokacji
@@ -41,7 +41,7 @@ CREATE TABLE Characters(
 	Character_ID INT PRIMARY KEY IDENTITY(1,1),
 	Player_ID INT NOT NULL FOREIGN KEY REFERENCES Players(Player_ID),
 	Guild_ID INT FOREIGN KEY REFERENCES Guilds(Guild_ID),
-	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID),
+	Location_ID INT NOT NULL FOREIGN KEY REFERENCES Locations(Location_ID) DEFAULT 1,
 	Nick NVARCHAR(32) UNIQUE NOT NULL,
 	Max_hp INT NOT NULL DEFAULT 100,
 	Hp INT NOT NULL DEFAULT 100,
@@ -111,10 +111,9 @@ CREATE TABLE Friends (
 
 --Lista sklepów
 CREATE TABLE Stores (
-	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID) ON DELETE CASCADE,
+	Store_ID INT NOT NULL FOREIGN KEY REFERENCES Friends(Store_ID),
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
-	Item_lvl INT NOT NULL,
-	Amount INT NOT NULL,
+	Item_lvl INT NOT NULL, --usuniecie Amount
 	Unit_cost INT NOT NULL
 	PRIMARY KEY (Store_ID, Item_ID, Item_lvl)
 )
@@ -144,7 +143,7 @@ CREATE TABLE Quests(
 	Min_lvl INT NOT NULL,
 	Quest_name NVARCHAR(32) UNIQUE NOT NULL,
 	Quest_desc NVARCHAR(256) UNIQUE NOT NULL,
-	Quest_Giver INT NOT NULL FOREIGN KEY REFERENCES NPCs(NPC_ID),
+	Quest_Giver INT NOT NULL FOREIGN KEY REFERENCES NPCs(NPC_ID) ON DELETE CASCADE,
 	--warunki wygranej
 	Npc_ID INT FOREIGN KEY REFERENCES NPCs(NPC_ID) ,
 	Item_ID INT FOREIGN KEY REFERENCES Items(Item_ID)  ,
@@ -197,9 +196,7 @@ END
 GO
 
 --funkcja wypisujaca przedmioty nalezace do danej postaci
-CREATE FUNCTION CharacterInventory (
-    @Character_ID INT
-)
+CREATE FUNCTION CharacterInventory (@Character_ID INT)
 RETURNS TABLE
 AS
 RETURN
@@ -210,9 +207,7 @@ RETURN
 GO
 
 --funkcja wypisujaca postacie utworzone przez danego gracza
-CREATE FUNCTION PlayerCharacters (
-    @Player_ID INT
-)
+CREATE FUNCTION PlayerCharacters (@Player_ID INT)
 RETURNS TABLE
 AS
 RETURN
@@ -224,9 +219,7 @@ RETURN
 GO
 
 --funkcja wypisuj¹ca postacie nalezace do danej guildi
-CREATE FUNCTION CharactersInGuild (
-    @Guild_ID INT
-)
+CREATE FUNCTION CharactersInGuild (@Guild_ID INT)
 RETURNS TABLE
 AS
 RETURN
@@ -237,9 +230,7 @@ GO
 
 
 --funkcja wypisuj¹ca wszystkich przeciwnikow w danej lokacji
-CREATE FUNCTION EnemiesInLocation (
-    @Location_ID INT
-)
+CREATE FUNCTION EnemiesInLocation (@Location_ID INT)
 RETURNS TABLE
 AS
 RETURN
@@ -251,9 +242,7 @@ GO
 
 
 --funkcja wypisuj¹ca wszystkich przyjaznych NPC w danej lokacji
-CREATE FUNCTION FriendsInLocation (
-    @Location_ID INT
-)
+CREATE FUNCTION FriendsInLocation (@Location_ID INT)
 RETURNS TABLE
 AS
 RETURN
@@ -264,9 +253,7 @@ RETURN
 GO
 
 --funkcja wypisuj¹ca wszystkich lokacje do ktorych moze przejsc postac
-CREATE FUNCTION AccessibleLocations (
-    @Character_ID INT
-)
+CREATE FUNCTION AccessibleLocations (@Character_ID INT)
 RETURNS TABLE
 AS
 RETURN
@@ -281,22 +268,7 @@ RETURN
 GO
 
 --funkcja wypisuj¹ca wszystkie questy dawane przez danego przyjaznego NPC
-CREATE FUNCTION NPCsQuests (
-    @Friend_ID INT
-)
-RETURNS TABLE
-AS
-RETURN
-    SELECT Q.Quest_ID, Q.Quest_name, Q.Min_lvl
-    FROM Quests Q
-	WHERE Q.Quest_Giver=@Friend_ID
-
-GO
-
---funkcja wypisuj¹ca wszystkie questy dawane przez danego przyjaznego NPC
-CREATE FUNCTION AccessibleQuests (
-    @Friend_ID INT
-)
+CREATE FUNCTION NPCsQuests (@Friend_ID INT)
 RETURNS TABLE
 AS
 RETURN
@@ -307,9 +279,7 @@ RETURN
 GO
 
 --funkcja wypisuj¹ca wszystkie przedmioty w danym sklepie
-CREATE FUNCTION ItemsInStore (
-    @Store_ID INT
-)
+CREATE FUNCTION ItemsInStore (@Store_ID INT)
 RETURNS TABLE
 AS
 RETURN
@@ -321,9 +291,7 @@ RETURN
 GO
 
 --funkcja wypisuj¹ca wszystkie nagrody przyznane za dany quest
-CREATE FUNCTION RewardsForQuest (
-    @Quest_ID INT
-)
+CREATE FUNCTION RewardsForQuest (@Quest_ID INT)
 RETURNS TABLE
 AS
 RETURN
@@ -348,7 +316,7 @@ GO
 CREATE PROCEDURE CreateCharacter(@PlayerID INT, @Nick NVARCHAR(32))
 AS
 	IF @Nick NOT IN (SELECT Email FROM Players)
-		INSERT INTO Characters(Player_ID, Nick) VALUES (@PlayerID, @Nick)
+		INSERT INTO Characters(Player_ID, Nick) VALUES (@PlayerID, @Nick) --TERAZ DZIAŁA -- TRZEBA DODAC ID LOKACJI
 
 GO
 
@@ -449,8 +417,8 @@ BEGIN
 		WHERE Guild_ID=@Guild_ID;
 
 		UPDATE Characters
-		SET @Guild_ID=NULL
-		WHERE Guild_ID=@Guild_ID;
+		SET Guild_ID=NULL
+		WHERE Character_ID=@Character_ID AND Guild_ID=@Guild_ID;
 	END
 END
 GO
@@ -461,27 +429,24 @@ BEGIN
 	IF(EXISTS(
 		SELECT *
 		FROM Characters
-		WHERE @Character_ID=@Character_ID AND Guild_ID IS NOT NULL
+		WHERE Character_ID=@Character_ID AND Guild_ID IS NOT NULL
 		))
 	BEGIN
 	DECLARE @CharactersGuild INT
 	SET @CharactersGuild=(
 		SELECT Guild_ID
 		FROM Characters
-		WHERE @Character_ID=@Character_ID)
+		WHERE Character_ID=@Character_ID)
 
 		EXEC RemoveMember @Character_ID=@Character_ID , @Guild_ID=@CharactersGuild
 	END
-	ELSE 
-	BEGIN
-		UPDATE Guilds
-		SET Members+=1
-		WHERE Guild_ID=@Guild_ID;
+	UPDATE Guilds
+	SET Members+=1
+	WHERE Guild_ID=@Guild_ID;
 
-		UPDATE Characters
-		SET @Guild_ID=@Guild_ID
-		WHERE @Character_ID=@Character_ID;
-	END
+	UPDATE Characters
+	SET Guild_ID=@Guild_ID
+	WHERE Character_ID=@Character_ID;
 
 END
 GO
@@ -743,8 +708,10 @@ AS BEGIN
 		SELECT Guild_ID
 		FROM INSERTED
 	)
-	---tu cos zmienialem
-	EXEC AddMember @Character_ID=@Character_ID, @Guild_ID=@Character_ID
+
+	UPDATE Characters
+	SET Guild_ID=@Giuld_ID
+	WHERE Character_ID=@Character_ID
 
 END
 GO

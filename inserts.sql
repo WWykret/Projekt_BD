@@ -6,9 +6,9 @@ INSERT INTO Players VALUES
 ('password 123', 'email3@wp.pl')
 
 INSERT INTO Locations VALUES
-('pi�mowy jar', 1),
-('pi�mowy gaj', 2),
-('Sala wyk�adowa', 3)
+('pi¿mowy jar', 1),
+('pi¿mowy gaj', 2),
+('Sala wyk³adowa', 3)
 
 INSERT INTO Characters(Player_ID, Nick, Location_ID, Lvl) VALUES
 (1, 'Dunk_man1', 1, 2),
@@ -33,9 +33,9 @@ INSERT INTO LocationsConnetions VALUES
 
 INSERT INTO NPCs VALUES
 (1, 'Gerarda'),
-(1, 'Gewis³aw'),
+(1, 'GewisÂ³aw'),
 (1, 'Genowefa'),
-(1, 'Rafa³ Kawa'),
+(1, 'RafaÂ³ Kawa'),
 (1, 'Kolos z ASD'),
 (1, 'Prokekt z BD')
 
@@ -54,7 +54,7 @@ INSERT INTO Enemies VALUES
 
 INSERT INTO Items VALUES
 ('Mlot Kawy', 10, NULL, NULL),
-('pierscie� ASD', NULL, 10, NULL),
+('pierscieñ ASD', NULL, 10, NULL),
 ('Zwolnienie z egz', NULL, NULL, 20),
 ('Strzala w kolanie', NULL, NULL, NULL)
 
@@ -108,11 +108,6 @@ INSERT INTO AuctionHouse VALUES
 INSERT INTO AuctionHouseBids VALUES
 (1, 5, 500)
 
-
-
-------
-
-
 INSERT INTO Banned VALUES
 (3, DATEADD(DAY, -13, GETDATE()), DATEADD(DAY, -4, GETDATE()), 'N-word')
 
@@ -121,3 +116,6 @@ EXEC AddMember @Character_ID=2,  @Guild_ID=1
 EXEC AddMember @Character_ID=4,  @Guild_ID=2
 
 EXEC AddMember @Character_ID=6,  @Guild_ID=2
+
+USE master
+

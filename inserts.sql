@@ -92,15 +92,15 @@ INSERT INTO EnemyDrops(Enemy_ID, Item_ID, Drop_chance) VALUES
 (6, 4, 0.9)
 
 
-INSERT INTO Stores(Store_ID, Item_ID, Item_lvl, Amount, Unit_cost) VALUES
-(1, 1, 5, 10, 100),
-(1, 2, 8, 10, 200),
-(1, 3, 10, 10, 300),
-(2, 2, 99, 5, 1000),
-(1, 3, 1, 10, 300),
-(2, 2, 9, 5, 1000),
-(3, 2, 8, 10, 200),
-(4, 3, 10, 10, 300)
+INSERT INTO Stores(Store_ID, Item_ID, Item_lvl, Unit_cost) VALUES
+(1, 1, 5, 100),
+(1, 2, 8, 200),
+(1, 3, 10, 300),
+(2, 2, 99, 1000),
+(1, 3, 1, 300),
+(2, 2, 9, 1000),
+(3, 2, 8, 200),
+(4, 3, 10, 300)
 
 INSERT INTO Quests(Min_lvl, Quest_name, Quest_desc, Quest_Giver, Npc_ID, Item_ID, Item_lvl, Item_amount) VALUES
 (2, 'poszukiwacze dzikow', 'jak w naziwe zadania', 3, 2, NULL, NULL, NULL)
@@ -138,7 +138,7 @@ EXEC AddMember @Character_ID=2,  @Guild_ID=2
 EXEC AddMember @Character_ID=6,  @Guild_ID=1
 
 --EXEC AddMember @Character_ID=3,  @Guild_ID=1
-
+/*
 USE PROJECT
 UPDATE Characters SET Gold=100000 WHERE Character_ID=1
 SELECT * FROM Inventory WHERE Character_ID=1
@@ -148,4 +148,148 @@ EXEC AttemptToBuy @Character_ID=1, @Store_ID=1, @Item_ID=3, @Item_lvl=1, @Amount
 SELECT * FROM Inventory WHERE Character_ID=1
 SELECT * FROM Stores WHERE Store_ID=1
 SELECT Gold FROM Characters WHERE Character_ID=1
+*/
+/*
+SELECT *
+FROM Characters
+
+EXEC Death @Character_ID=1
+
+SELECT *
+FROM Characters
+
+EXEC Death @Character_ID=1
+
+SELECT *
+FROM Characters
+
+EXEC Death @Character_ID=2
+
+SELECT *
+FROM Characters
+*/
+/*
+SELECT *
+FROM Characters
+
+EXEC Gain_Exp @Character_ID=2, @Exp_gain =500
+
+SELECT *
+FROM Characters
+
+EXEC Gain_Exp @Character_ID=2, @Exp_gain =500
+
+SELECT *
+FROM Characters
+
+EXEC Gain_Exp @Character_ID=2, @Exp_gain =500
+
+SELECT *
+FROM Characters
+*/
+/*
+SELECT *
+FROM QuestsTracker
+
+EXEC AcceptQuest @Character_ID=2, @Quest_ID =1
+
+SELECT *
+FROM QuestsTracker
+
+EXEC ReturnQuest @Character_ID=2, @Quest_ID =1
+
+SELECT *
+FROM QuestsTracker
+ */
+ /*
+ SELECT *
+FROM AuctionHouse
+
+ SELECT *
+FROM AuctionHouseBids
+
+ SELECT *
+FROM Characters
+
+EXEC BidOnAuction @Character_ID=1, @Offer_ID=1, @Gold=300
+
+  SELECT *
+FROM AuctionHouseBids
+
+ SELECT *
+FROM Characters
+
+EXEC BidOnAuction @Character_ID=1, @Offer_ID=1, @Gold=400
+
+   SELECT *
+FROM AuctionHouseBids
+
+ SELECT *
+FROM Characters
+*/
+
+/*
+ SELECT *
+FROM Characters
+ SELECT *
+FROM Guilds
+
+INSERT INTO Guilds(Guild_owner, Name) VALUES
+(3, 'LOL')
+
+ SELECT *
+FROM Characters
+ SELECT *
+FROM Guilds
+*/
+
+ SELECT *
+FROM Inventory
+
+INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
+(1, 1, 2, 3)
+
+ SELECT *
+FROM Inventory
+
+INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
+(1, 2, 20, 30)
+
+ SELECT *
+FROM Inventory
+
+INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
+(1, 2, 20,2)
+
+ SELECT *
+FROM Inventory
+
+INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
+(1, 2, 20,-1)
+
+ SELECT *
+FROM Inventory
+
+INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
+(1, 2, 20,-100)
+
+ SELECT *
+FROM Inventory
+
+INSERT INTO Inventory(Character_ID, Item_ID, Item_lvl, Item_amount) VALUES
+(1, 2, 21,-100)
+
+ SELECT *
+FROM Inventory
+
+DELETE FROM Inventory
+WHERE Character_ID=1 AND Item_ID=1 AND Item_lvl=2
+
+ SELECT *
+FROM Inventory
+
+
+
+
+
 USE master

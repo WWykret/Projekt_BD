@@ -98,3 +98,5 @@ INSERT INTO AuctionHouse VALUES
 
 INSERT INTO AuctionHouseBids VALUES
 (1, 5, 500)
+
+USE master

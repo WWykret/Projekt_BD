@@ -21,10 +21,6 @@ CREATE TABLE Guilds(
 	Guild_owner INT NOT NULL,
 	Name NVARCHAR(32) UNIQUE NOT NULL,
 	Members INT NOT NULL DEFAULT 1,
-	/*
-	Guild_lvl INT NOT NULL,
-	Guild_exp INT NOT NULL
-	*/
 )
 
 --Lista lokacji
@@ -92,15 +88,14 @@ CREATE TABLE NPCs (
 
 --Lista Przeciwników
 CREATE TABLE Enemies (
-	Enemy_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID) ON DELETE CASCADE,
+	Enemy_ID INT PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID) ON DELETE CASCADE,
 	Hp INT NOT NULL,
 	Defence INT NOT NULL,
 	Attack INT NOT NULL,
 	Kill_exp INT NOT NULL,
-	--Status_on_hit INT REFERENCES Statuses(Status_ID)  --to jest potencjalny powut zeby zachowac statusy, mozna tego uzyc do wyzwalacza
 )
 
---Lista przedmiotów które wypadaj¹
+--Lista przedmiotów które wypadają
 CREATE TABLE EnemyDrops (
 	Enemy_ID INT NOT NULL FOREIGN KEY REFERENCES Enemies(Enemy_ID) ON DELETE CASCADE,
 	Item_ID INT NOT NULL FOREIGN KEY REFERENCES Items(Item_ID),
@@ -111,7 +106,7 @@ CREATE TABLE EnemyDrops (
 --Lista Przyjaznych NPC
 CREATE TABLE Friends (
 	Friend_ID INT NOT NULL PRIMARY KEY FOREIGN KEY REFERENCES NPCs(NPC_ID) ON DELETE CASCADE,
-	Store_ID INT UNIQUE, --ew. póŸniej dodaæ sequence
+	Store_ID INT UNIQUE NOT NULL
 )
 
 --Lista sklepów
@@ -143,13 +138,13 @@ CREATE TABLE AuctionHouseBids (
 	PRIMARY KEY (Offer_ID,Bidder_ID)
 )
 
---Lista zadañ
+--Lista zadań
 CREATE TABLE Quests(
-	Quest_ID INT NOT NULL PRIMARY KEY IDENTITY(1,1),
+	Quest_ID INT PRIMARY KEY IDENTITY(1,1),
 	Min_lvl INT NOT NULL,
 	Quest_name NVARCHAR(32) UNIQUE NOT NULL,
-	Quest_desc NVARCHAR(256) /*UNIQUE*/ NOT NULL,
-	Quest_Giver  INT FOREIGN KEY REFERENCES NPCs(NPC_ID),
+	Quest_desc NVARCHAR(256) UNIQUE NOT NULL,
+	Quest_Giver INT NOT NULL FOREIGN KEY REFERENCES NPCs(NPC_ID),
 	--warunki wygranej
 	Npc_ID INT FOREIGN KEY REFERENCES NPCs(NPC_ID) ,
 	Item_ID INT FOREIGN KEY REFERENCES Items(Item_ID)  ,

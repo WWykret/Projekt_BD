@@ -20,7 +20,7 @@ CREATE TABLE Guilds(
 	Guild_ID INT PRIMARY KEY IDENTITY(1,1),
 	Guild_owner INT NOT NULL,
 	Name NVARCHAR(32) UNIQUE NOT NULL,
-	Members INT NOT NULL DEFAULT 1,
+	Members INT NOT NULL DEFAULT 0,
 )
 
 --Lista lokacji
@@ -440,6 +440,7 @@ BEGIN
 
 		EXEC RemoveMember @Character_ID=@Character_ID , @Guild_ID=@CharactersGuild
 	END
+
 	UPDATE Guilds
 	SET Members+=1
 	WHERE Guild_ID=@Guild_ID;
@@ -447,7 +448,6 @@ BEGIN
 	UPDATE Characters
 	SET Guild_ID=@Guild_ID
 	WHERE Character_ID=@Character_ID;
-
 END
 GO
 
@@ -542,6 +542,7 @@ AS
 BEGIN
 	DECLARE @Gold_Difrence INT
 	SET @Gold_Difrence=@Gold
+	SELECT @Gold_Difrence
 	IF(EXISTS(
 		SELECT *
 		FROM AuctionHouseBids
@@ -561,9 +562,10 @@ BEGIN
 		INSERT INTO AuctionHouseBids VALUES
 		(@Offer_ID, @Character_ID, @Gold)
 	END
+	SELECT @Gold_Difrence
 
 	UPDATE Characters
-	SET @Gold-=@Gold_Difrence
+	SET Gold-=@Gold_Difrence
 	WHERE Character_ID=@Character_ID
 
 END
@@ -582,10 +584,14 @@ AS BEGIN
 	DECLARE @Item_amount INT;
 	DECLARE @Item_Hp INT;
 
+	
+
 
     SELECT @Character_ID = Character_ID, @Item_ID = I.Item_ID, @Item_lvl = Item_lvl, @Item_amount=Item_amount , @Item_Hp=Hp 
 	FROM INSERTED I
 	JOIN Items It ON It.Item_ID=I.Item_ID;
+
+	
 
     IF(EXISTS(
 		SELECT *
@@ -593,82 +599,78 @@ AS BEGIN
 		WHERE I.Character_ID=@Character_ID AND I.Item_ID=@Item_ID AND I.Item_lvl=@Item_lvl
 	))
 	BEGIN
-		UPDATE Inventory
-		SET Item_amount+=(SELECT Item_amount FROM INSERTED )
-		WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
 
-	END 
-	ELSE
-	BEGIN
-		/*
-		SELECT *
-		INTO Inventory
-		FROM INSERTED
-		*/
+		DECLARE @Original_Item_amount INT
+		SET @Original_Item_amount=(
+			SELECT Item_amount
+			FROM Inventory
+			WHERE @Character_ID = Character_ID AND @Item_ID = Item_ID AND @Item_lvl = Item_lvl)
 
-		INSERT INTO Inventory
-		VALUES (@Character_ID, @Item_ID, @Item_lvl,@Item_amount)
-	END
 
-	IF(@Item_Hp IS NOT NULL)
-	BEGIN
-	UPDATE Characters
-	SET Max_hp+=@Item_lvl*@Item_amount*@Item_Hp
-	WHERE Character_ID=@Character_ID
+		IF(@Item_amount+@Original_Item_amount>0)
+		BEGIN
+			UPDATE Inventory
+			SET Item_amount+=@Item_amount
+			WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
 
+			IF(@Item_Hp IS NOT NULL)
+			BEGIN
+				UPDATE Characters
+				SET Max_hp+=@Item_lvl*@Item_amount*@Item_Hp
+				WHERE Character_ID=@Character_ID
+			END
+
+		END ELSE BEGIN
+			DELETE FROM Inventory
+			WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
+		END
+
+	END ELSE BEGIN
+
+		IF(@Item_amount>0)
+		BEGIN
+			INSERT INTO Inventory
+			VALUES (@Character_ID, @Item_ID, @Item_lvl,@Item_amount)
+
+			IF(@Item_Hp IS NOT NULL)
+			BEGIN
+				UPDATE Characters
+				SET Max_hp+=@Item_lvl*@Item_amount*@Item_Hp
+				WHERE Character_ID=@Character_ID
+			END
+		END
+		
 	END
 
 END
 GO
 
-CREATE TRIGGER deleteItem ON Inventory--dodaje tylko jeden wierszu
+CREATE TRIGGER deleteItem ON Inventory
 INSTEAD OF DELETE
 AS BEGIN
 
+
 	DECLARE @Character_ID INT;
-    DECLARE @Item_ID INT;
+	DECLARE @Item_ID INT;
     DECLARE @Item_lvl INT;
 	DECLARE @Item_amount INT;
-
 	DECLARE @Item_Hp INT;
-	
-    SELECT @Character_ID = Character_ID, @Item_ID = D.Item_ID , @Item_lvl = Item_lvl, @Item_amount=Item_amount , @Item_Hp=Hp 
+
+    SELECT @Character_ID = Character_ID, @Item_ID=D.Item_ID, @Item_lvl = Item_lvl, @Item_amount=Item_amount , @Item_Hp=Hp 
 	FROM DELETED D
-	JOIN Items I ON D.Item_ID=I.Item_ID;
+	JOIN Items It ON It.Item_ID=D.Item_ID;
 
 	
-
-    IF(@Item_amount<(
-		SELECT Item_amount
-		FROM Inventory I
-		WHERE I.Character_ID=@Character_ID AND I.Item_ID=@Item_ID AND I.Item_lvl=@Item_lvl
-	))
-	BEGIN
-
-		UPDATE Inventory
-		SET Item_amount-=(SELECT Item_amount FROM INSERTED )
-		WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
-
-	END 
-	ELSE
-	BEGIN
-		SET @Item_amount=(
-			SELECT Item_amount
-			FROM Inventory I
-			WHERE I.Character_ID=@Character_ID AND I.Item_ID=@Item_ID AND I.Item_lvl=@Item_lvl)
-		
-		DELETE FROM Inventory
-		WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
-
-	END
-
 	IF(@Item_Hp IS NOT NULL)
 	BEGIN
-	UPDATE Characters
-	SET Max_hp-=@Item_lvl*@Item_amount*@Item_Hp
-	WHERE Character_ID=@Character_ID
+		UPDATE Characters
+		SET Max_hp-=@Item_lvl*@Item_amount*@Item_Hp
+		WHERE Character_ID=@Character_ID
 
 	END
+
+	DELETE FROM Inventory
+	WHERE Character_ID=@Character_ID AND Item_ID=@Item_ID AND Item_lvl=@Item_lvl
 END
 GO
 
@@ -696,7 +698,7 @@ AFTER INSERT
 AS BEGIN
 
 	DECLARE @Character_ID INT;
-	DECLARE @Giuld_ID INT;
+	DECLARE @Guild_ID INT;
 
 	SET @Character_ID =(
 		SELECT Guild_owner
@@ -704,14 +706,13 @@ AS BEGIN
 	)
 	
 	
-	SET @Giuld_ID =(
+	SET @Guild_ID =(
 		SELECT Guild_ID
 		FROM INSERTED
 	)
+	
+	EXEC AddMember @Character_ID=@Character_ID, @Guild_ID=@Guild_ID
 
-	UPDATE Characters
-	SET Guild_ID=@Giuld_ID
-	WHERE Character_ID=@Character_ID
 
 END
 GO
